@@ -1,0 +1,32 @@
+apiVersion: v2
+name: media-stack
+description: Helm chart for fully configuring a cilium cluster.
+type: application
+version: 0.0.1
+appVersion: 1.14.0-snapshot.3
+keywords:
+  - media
+home: https://fluentbit.io/
+icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/external-secrets-operator/icon/color/eso-icon-color.svg
+dependencies:
+  - name: deluge
+    version: "^14.0.21"
+    repository: https://charts.truecharts.org
+  - name: heimdall
+    repository: https://charts.truecharts.org
+    version: "^15.0.22"
+  - name: jackett
+    repository: https://charts.truecharts.org
+    version: "^14.0.32"
+
+maintainers:
+  - name: appkins
+    email: nbatkins@gmail.com
+    url: https://github.com/appkins
+annotations:
+  artifacthub.io/alternativeName: media-stack
+  artifacthub.io/changes: |
+    - kind: fixed
+      description: "Fixed volume mount typo."
+    - kind: fixed
+      description: "Fixed missing fsGroup from pod security context."

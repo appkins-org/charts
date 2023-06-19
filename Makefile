@@ -3,26 +3,27 @@
 
 KUBECONFIG := $(shell pwd)/.data/kubeconfig
 
-CHARTS := $(patsubst %/,%,$(dir $(wildcard charts/*/Chart.yaml)))
+CHARTS := $(patsubst charts/%/,%,$(dir $(wildcard charts/*/Chart.yaml)))
+
+${CHARTS}:
 
 dep/update: ${CHARTS}
-	helm dependency update $<
+	helm dependency update charts/$<
 
 dep/build: ${CHARTS}
-	helm dependency build $<
+	helm dependency build charts/$<
 
 dep: ${CHARTS}
-	helm dependency update $<
+	helm dependency update charts/$<
 
 lint: ${CHARTS}
-	helm lint $<
+	helm lint charts/$<
 
 template: ${CHARTS}
-	helm template $(notdir $<) $< -n kube-system | tee $(patsubst charts/%,.data/%.yaml,$<)
+	helm template $< charts/$< -n kube-system | tee $(patsubst %,.data/%.yaml,$<)
 
 deploy: ${CHARTS}
 	helm upgrade --install \
 							 -n kube-system \
-							 --set cilium.k8sServiceHost=192.168.1.198 \
 							 --kubeconfig ${KUBECONFIG} \
-							 $(notdir $<) $<
+							 $< charts/$<

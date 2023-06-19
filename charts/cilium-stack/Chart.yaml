@@ -22,6 +22,9 @@ dependencies:
   - name: metallb
     version: "^0.13.10"
     repository: https://metallb.github.io/metallb
+  # - name: openelb
+  #   version: "^0.2.4"
+  #   repository: https://charts.kubesphere.io/stable
   - name: metrics-server
     version: "^3.10.0"
     repository: https://kubernetes-sigs.github.io/metrics-server

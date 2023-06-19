@@ -30,8 +30,8 @@ logLevel: info
 
 # Cilium
 cilium:
-  k8sServiceHost: 192.168.1.198
-  k8sServicePort: 6443
+  #k8sServiceHost: 192.168.1.198
+  #k8sServicePort: 6443
   nameOverride: cilium
   fullnameOverride: cilium
   enabled: true
@@ -45,11 +45,12 @@ cilium:
     prometheus:
       enabled: true
       serviceMonitor:
-        enabled: false
+        enabled: true
   prometheus:
     enabled: true
   dashboards:
     enabled: true
+    namespace: monitoring
   clustermesh:
     config:
       enabled: false
@@ -93,8 +94,11 @@ cilium:
     enabled: true
   hostPort:
     enabled: true
+  hostFirewall:
+    enabled: true
   hubble:
     enabled: true
+    enableOpenMetrics: true
     metrics:
       enabled: false
     ui:
@@ -102,6 +106,9 @@ cilium:
     relay:
       enabled: true
       replicas: 1
+    dashboards:
+      enabled: true
+      namespace: monitoring
   ipam:
     mode: kubernetes
   loadBalancer:
@@ -127,7 +134,7 @@ cert-manager:
   installCRDs: false
   prometheus:
     serviceMonitor:
-      enabled: false
+      enabled: true
   webhook:
     serviceType: ClusterIP
   resources:
@@ -141,14 +148,18 @@ metrics-server:
   nameOverride: metrics-server
   fullnameOverride: metrics-server
 
-  args:
-    - --kubelet-insecure-tls
+  containerPort: 10251
+
+  #args:
+    # - --deprecated-kubelet-completely-insecure
+  #  - --kubelet-insecure-tls
+  #  - --kubelet-preferred-address-types=InternalIP
 
   #service:
   #  port: 8080
 
   apiService:
-    create: true
+    create: false
     insecureSkipTLSVerify: true
 
   hostNetwork:
@@ -221,7 +232,7 @@ kube-prometheus-stack:
     nameOverride: grafana
 
     serviceMonitor:
-      enabled: false
+      enabled: true
 
     grafana.ini:
       auth:
@@ -279,7 +290,7 @@ fluent-bit:
   nameOverride: fluent-bit
 
   serviceMonitor:
-    enabled: false
+    enabled: true
 
   config:
     service: |
@@ -390,7 +401,7 @@ loki:
     dashboards:
       enabled: true
     serviceMonitor:
-      enabled: false
+      enabled: true
   singleBinary:
     replicas: 1
   loki:
@@ -465,7 +476,7 @@ tempo:
   nameOverride: tempo
 
   serviceMonitor:
-    enabled: false
+    enabled: true
 
   storage:
     trace:
