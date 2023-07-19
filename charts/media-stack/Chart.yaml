@@ -1,32 +1,38 @@
 apiVersion: v2
 name: media-stack
-description: Helm chart for fully configuring a cilium cluster.
-type: application
-version: 0.0.1
-appVersion: 1.14.0-snapshot.3
-keywords:
-  - media
-home: https://fluentbit.io/
-icon: https://raw.githubusercontent.com/cncf/artwork/master/projects/external-secrets-operator/icon/color/eso-icon-color.svg
-dependencies:
-  - name: deluge
-    version: "^14.0.21"
-    repository: https://charts.truecharts.org
-  - name: heimdall
-    repository: https://charts.truecharts.org
-    version: "^15.0.22"
-  - name: jackett
-    repository: https://charts.truecharts.org
-    version: "^14.0.32"
+description: A Helm chart for Kubernetes
 
-maintainers:
-  - name: appkins
-    email: nbatkins@gmail.com
-    url: https://github.com/appkins
-annotations:
-  artifacthub.io/alternativeName: media-stack
-  artifacthub.io/changes: |
-    - kind: fixed
-      description: "Fixed volume mount typo."
-    - kind: fixed
-      description: "Fixed missing fsGroup from pod security context."
+# A chart can be either an 'application' or a 'library' chart.
+#
+# Application charts are a collection of templates that can be packaged into versioned archives
+# to be deployed.
+#
+# Library charts provide useful utilities or functions for the chart developer. They're included as
+# a dependency of application charts to inject those utilities and functions into the rendering
+# pipeline. Library charts do not define any templates and therefore cannot be deployed.
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.1.0
+
+# This is the version number of the application being deployed. This version number should be
+# incremented each time you make changes to the application. Versions are not expected to
+# follow Semantic Versioning. They should reflect the version the application is using.
+# It is recommended to use it with quotes.
+appVersion: "1.16.0"
+
+dependencies:
+  - name: transmission
+    version: "^8.4.3"
+    repository: https://geek-cookbook.github.io/charts/
+  - name: sonarr
+    version: "^16.3.2"
+    repository: https://geek-cookbook.github.io/charts/
+  - name: radarr
+    version: "^16.3.2"
+    repository: https://geek-cookbook.github.io/charts/
+  - name: prowlarr
+    version: "^4.5.2"
+    repository: https://geek-cookbook.github.io/charts/
