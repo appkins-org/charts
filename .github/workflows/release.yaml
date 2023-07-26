@@ -113,7 +113,7 @@ jobs:
             fi
           done
 
-          helm index .
+          helm repo index .
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
