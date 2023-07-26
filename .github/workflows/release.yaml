@@ -1,0 +1,120 @@
+name: GH Reusable Workflow Release Helm Charts
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - charts/**/Chart.yaml
+
+jobs:
+  release:
+    name: Release Helm charts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      packages: write
+      pages: write
+    defaults:
+      run:
+        shell: bash
+    needs: check
+    env:
+      helm_repos: "cilium=https://helm.cilium.io,grafana=https://grafana.github.io/helm-charts,"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: alexellis/setup-arkade@v1
+      - uses: alexellis/arkade-get@master
+        with:
+          helm: latest
+          jq: latest
+          yq: latest
+          cr: latest
+          cosign: latest
+          crane: latest
+
+      - name: Configure Helm repos
+        if: ${{ env.helm_repos }}
+        run: |
+          set -euo pipefail
+
+          for repo in ${helm_repos//,/ }
+          do
+            helm repo add "${repo%=*}" "${repo#*=}"
+          done
+
+      - name: Configure Git
+        run: |
+          set -euo pipefail
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
+      - name: Login to OCI registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.oci_password || secrets.GITHUB_TOKEN }}
+
+      - name: Install ORAS
+        uses: oras-project/setup-oras@v1.0.0
+
+      - name: Configure OCI repository
+        run: |
+          set -euo pipefail
+
+          mkdir -p _site
+          cd _site
+
+          helm registry login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} "ghcr.io"
+
+          for chart_dir in ../charts/*
+          do
+            if [[ -d "${chart_dir}" ]]
+            then
+              chart="$(basename "${chart_dir}")"
+              chart_version=$(yq '.version' ../charts/${chart}/Chart.yaml)
+
+              helm dependency build "${chart_dir}"
+
+              helm package "${chart_dir}"
+              output_path=$(ls ${chart}-*.tgz | head -1)
+
+              ah_config_path="./charts/${chart}/artifacthub-repo.yml"
+
+              if [[ -f "${ah_config_path}" ]]
+              then
+                oci_repository="ghcr.io/${{ github.repository }}/${chart}"
+
+                oras login --username "${{ github.actor }}" --password "${{ secrets.oci_password || secrets.GITHUB_TOKEN }}" "ghcr.io"
+                oras push "${oci_repository}:artifacthub.io" "${ah_config_path}:application/vnd.cncf.artifacthub.repository-metadata.layer.v1.yaml"
+              fi
+
+              chart_version=$(yq '.version' ../charts/${chart}/Chart.yaml)
+
+              oci_repository="ghcr.io/${{ github.repository }}/${chart}"
+              oci_image="${oci_repository}:${chart_version}"
+
+              helm push "${output_path}" "oci://ghcr.io/${{ github.repository }}"
+
+              digest="$(crane digest "${oci_image}")"
+              cosign sign --yes "${oci_image}@${digest}"
+            fi
+          done
+
+          helm index .
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: '_site'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
