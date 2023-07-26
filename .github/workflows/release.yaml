@@ -74,7 +74,7 @@ jobs:
           helm registry login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} "ghcr.io"
 
           i=0
-          for repo in $(yq eval-all -M '[.dependencies[].repository]|unique' charts/*/Chart.yaml | cut -c 3-); do
+          for repo in $(yq eval-all -M '[.dependencies[].repository]|unique' ../charts/*/Chart.yaml | cut -c 3-); do
             i=$((i+1))
             helm repo add "${i}" "${repo}"
           done
