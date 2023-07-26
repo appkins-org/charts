@@ -20,9 +20,8 @@ jobs:
     defaults:
       run:
         shell: bash
-    needs: check
     env:
-      helm_repos: "cilium=https://helm.cilium.io,grafana=https://grafana.github.io/helm-charts,"
+      helm_repos: "cilium=https://helm.cilium.io,grafana=https://grafana.github.io/helm-charts"
     steps:
       - name: Checkout
         uses: actions/checkout@v3
