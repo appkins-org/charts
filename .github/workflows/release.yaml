@@ -113,7 +113,7 @@ jobs:
             fi
           done
 
-          helm repo index .
+          helm repo index . --url https://appkins-org.github.io/charts
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
