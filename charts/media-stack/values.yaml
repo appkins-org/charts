@@ -81,6 +81,12 @@ tolerations: []
 
 affinity: {}
 
+flamarr:
+  name: flemmarr
+  image: pierremesure/flemmarr
+  config:
+    
+
 sonarr:
   image:
     repository: lscr.io/linuxserver/sonarr

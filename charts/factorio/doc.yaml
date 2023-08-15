@@ -1,0 +1,17 @@
+project:
+  name: factorio
+  shortName: factorio
+  url: https://github.com/SQLJames/factorio
+  description: A Helm chart for running factorio in kubernetes
+  app: Factorio
+repository:
+  url: https://github.com/SQLJames/factorio
+  name: github
+chart:
+  name: factorio
+  version: 1.2.4
+  values: "-- generate from values file --"
+  valuesExample: "-- generate from values file --"
+release:
+  name: factorio
+  namespace: factorio
