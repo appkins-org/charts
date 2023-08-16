@@ -517,3 +517,14 @@ prowlarr:
         - name: apiKey
           value: 8f44b6f6539b4acc9047554664a6d4c2
 {{- end -}}
+
+sonarr:
+  enabled: true
+radarr:
+  enabled: true
+lidarr:
+  enabled: true
+readarr:
+  enabled: true
+prowlarr:
+  enabled: true

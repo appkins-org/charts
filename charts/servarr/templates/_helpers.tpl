@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "media-stack.name" -}}
+{{- define "servarr.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "media-stack.fullname" -}}
+{{- define "servarr.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "media-stack.chart" -}}
+{{- define "servarr.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "media-stack.labels" -}}
-helm.sh/chart: {{ include "media-stack.chart" . }}
-{{ include "media-stack.selectorLabels" . }}
+{{- define "servarr.labels" -}}
+helm.sh/chart: {{ include "servarr.chart" . }}
+{{ include "servarr.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,21 +45,34 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "media-stack.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "media-stack.name" . }}
+{{- define "servarr.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "servarr.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "media-stack.serviceAccountName" -}}
+{{- define "servarr.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "media-stack.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "servarr.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Return the appropriate apiVersion for ingress.
+*/}}
+{{- define "servarr.ingress.apiVersion" -}}
+  {{- if and (.Capabilities.APIVersions.Has "networking.k8s.io/v1") (semverCompare ">= 1.19-0" .Capabilities.KubeVersion.Version) -}}
+      {{- print "networking.k8s.io/v1" -}}
+  {{- else if .Capabilities.APIVersions.Has "networking.k8s.io/v1beta1" -}}
+    {{- print "networking.k8s.io/v1beta1" -}}
+  {{- else -}}
+    {{- print "extensions/v1beta1" -}}
+  {{- end -}}
+{{- end -}}
 
 {{- define "transmission.fullname" -}}
 {{- default "transmission" .Values.transmission.fullname }}
@@ -75,7 +88,7 @@ Create the name of the service account to use
 
 
 {{- define "transmission.labels" -}}
-helm.sh/chart: {{ include "media-stack.chart" . }}
+helm.sh/chart: {{ include "servarr.chart" . }}
 {{ include "transmission.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
@@ -84,7 +97,23 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{- define "transmission.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "media-stack.name" . }}
+app.kubernetes.io/name: {{ include "servarr.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/component: transmission
 {{- end }}
+
+{{- define "prowlarr.name" -}}
+{{- default "prowlarr" .Values.prowlarr.name }}
+{{- end -}}
+
+{{- define "prowlarr.port" -}}
+{{- default 8989 .Values.prowlarr.port }}
+{{- end }}
+
+{{- define "servarr.components" -}}
+{{- range $key, $val := pick .Values "sonarr" "radarr" "lidarr" "readarr" "prowlarr" -}}
+{{- if or $val.enabled (eq $key "prowlarr") -}}
+{{ $key }}:
+  {{ toYaml $val | nindent 2 }}
+{{- end -}}
+{{- end -}}

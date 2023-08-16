@@ -1,0 +1,40 @@
+{{- $componentKeys := list "sonarr" "radarr" "lidarr" "readarr" "prowlarr" }}
+{{- $apiKeys := dict }}
+{{- $components := pick .Values "sonarr" "radarr" "lidarr" "readarr" "prowlarr" | default dict }}
+{{- range $key, $val := $components }}
+{{- if $val.enabled }}
+{{- $_ := set $apiKeys $key ($val.apiKey | default (uuidv4 | replace "-" "")) }}
+{{- else if ne $key "prowlarr" }}
+{{- $_ := unset $components $key}}
+{{- end }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "servarr.labels" . | nindent 4 }}
+data:
+{{- range $key, $val := pick .Values "sonarr" "radarr" "lidarr" "readarr" "prowlarr" | default dict }}
+  {{ $key }}-config.xml: |-
+    <Config>
+      <BindAddress>*</BindAddress>
+      <Port>{{ $val.service.port }}</Port>
+      <SslPort>9898</SslPort>
+      <EnableSsl>False</EnableSsl>
+      <LaunchBrowser>True</LaunchBrowser>
+      <ApiKey>{{ get $apiKeys $key }}</ApiKey>
+      <AuthenticationMethod>None</AuthenticationMethod>
+      <Branch>master</Branch>
+      <LogLevel>info</LogLevel>
+      <SslCertPath></SslCertPath>
+      <SslCertPassword></SslCertPassword>
+      <UrlBase></UrlBase>
+      <InstanceName>{{ $key }}</InstanceName>
+      <UpdateMechanism>Docker</UpdateMechanism>
+      <AnalyticsEnabled>False</AnalyticsEnabled>
+    </Config>
+{{ end -}}
+  config.yaml: |
+    test: val

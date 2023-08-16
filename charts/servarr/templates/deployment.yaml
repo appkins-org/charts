@@ -1,42 +1,46 @@
-{{- $port := default 8989 .Values.prowlarr.port -}}
+{{- $selectorLabels := include "servarr.selectorLabels" . -}}
+{{- $labels := include "servarr.labels" . -}}
+{{- $serviceAccountName := include "servarr.serviceAccountName" . -}}
+{{- range $key, $val := pick .Values "sonarr" "radarr" "lidarr" "readarr" "prowlarr" | default dict }}
+{{- if or $val.enabled (eq $key "prowlarr") }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "prowlarr.fullname" . }}
+  name: {{ default $key $val.nameOverride }}
   labels:
-    {{- include "prowlarr.labels" . | nindent 4 }}
+    {{- $labels | nindent 4 }}
+    app.kubernetes.io/component: {{ $key }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
+  replicas: {{ default 1 $val.replicaCount }}
   selector:
     matchLabels:
-      {{- include "prowlarr.selectorLabels" . | nindent 6 }}
+      {{- $selectorLabels | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
+      {{- with $val.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "prowlarr.selectorLabels" . | nindent 8 }}
+        {{- $selectorLabels | nindent 8 }}
     spec:
-      {{- with .Values.imagePullSecrets }}
+      {{- with $val.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "prowlarr.serviceAccountName" . }}
+      serviceAccountName: {{ $serviceAccountName }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {{- toYaml $val.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: {{ $key }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+            {{- toYaml $val.securityContext | nindent 12 }}
+          image: {{ $val.image | default (printf "lscr.io/linuxserver/%s:latest" $key) | quote }}
+          imagePullPolicy: {{ $val.imagePullPolicy | default "IfNotPresent" }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.port }}
+              containerPort: {{ $val.service.port }}
               protocol: TCP
           livenessProbe:
             httpGet:
@@ -60,16 +64,18 @@ spec:
               path: /
               port: http
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-      {{- with .Values.nodeSelector }}
+            {{- toYaml (default dict $val.resources) | nindent 12 }}
+      {{- with $val.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with (coalesce $val.affinity $val.affinity dict) }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations }}
+      {{- with $val.tolerations | default dict }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}
+{{- end }}

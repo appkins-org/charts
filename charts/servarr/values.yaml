@@ -1,4 +1,4 @@
-# Default values for media-stack.
+# Default values for servarr.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -85,7 +85,7 @@ flamarr:
   name: flemmarr
   image: pierremesure/flemmarr
   config:
-    
+
 
 sonarr:
   image:
@@ -192,6 +192,7 @@ sonarr:
 # Prowlarr specific values
 ###
 prowlarr:
+  enabled: true
   image:
     repository: lscr.io/linuxserver/prowlarr
     tag: latest
@@ -218,6 +219,7 @@ prowlarr:
 # Radarr specific values
 ###
 radarr:
+  enabled: true
   image:
     repository: lscr.io/linuxserver/radarr
     pullPolicy: IfNotPresent
@@ -317,6 +319,11 @@ radarr:
         additionalMetrics: false
         # -- Set to true to enable gathering unknown queue items
         unknownQueueItems: false
+
+lidarr:
+  enabled: true
+readarr:
+  enabled: true
 
 ###
 # Transmission specific values
