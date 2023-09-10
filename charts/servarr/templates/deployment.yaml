@@ -43,10 +43,6 @@ spec:
               containerPort: {{ $val.service.port }}
               protocol: TCP
           livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          livenessProbe:
             exec:
               command:
               - /usr/bin/env

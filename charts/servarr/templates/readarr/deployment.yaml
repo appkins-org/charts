@@ -1,0 +1,175 @@
+{{- if .Values.readarr.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "readarr.name" . }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "readarr.labels" . | nindent 4 }}
+  {{- if not (empty .Values.servarr.annotations) }}
+  annotations:
+    {{- with .Values.servarr.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.readarr.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- if not .Values.readarr.autoscaling.enabled }}
+  replicas: {{ .Values.readarr.replicas }}
+  {{- end }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  revisionHistoryLimit: {{ .Values.servarr.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      {{- include "readarr.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print .Template.BasePath "/readarr/config.yaml") . | sha256sum }}
+        {{- with .Values.servarr.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.readarr.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "readarr.selectorLabels" . | nindent 8 }}
+        {{- with .Values.servarr.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.readarr.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.readarr.selectorLabels }}
+        {{- tpl (toYaml .) $ | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "servarr.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- include "readarr.priorityClassName" . | nindent 6 }}
+      securityContext:
+        {{- toYaml .Values.servarr.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.readarr.terminationGracePeriodSeconds }}
+      containers:
+        - name: readarr
+          image: {{ printf "%s:%s" .Values.readarr.image.repository (default "latest" .Values.readarr.image.tag) | quote }}
+          imagePullPolicy: {{ .Values.readarr.image.pullPolicy }}
+          args:
+            - -config.file=/etc/loki/config/config.yaml
+            - -target={{ .Values.readarr.targetModule }}
+            - -legacy-readarr-mode=false
+            - -common.compactor-grpc-address={{ include "servarr.backendFullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}:9095
+            {{- with .Values.readarr.extraArgs }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http-metrics
+              containerPort: 3100
+              protocol: TCP
+            - name: grpc
+              containerPort: 9095
+              protocol: TCP
+            - name: http-memberlist
+              containerPort: 7946
+              protocol: TCP
+
+          env:
+            - name: TZ
+              value: "{{ .Values.common.timezone | default "UTC" }}"
+            {{- with .Values.readarr.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.readarr.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.common.containerSecurityContext | nindent 12 }}
+          livenessProbe:
+            exec:
+              command:
+              - /usr/bin/env
+              - bash
+              - -c
+              - "curl --fail localhost:{{ .Values.readarr.service.port | default 8989 }}/api/v3/system/status?apiKey=`IFS=\> && while
+                read -d \< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`"
+            failureThreshold: 5
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+
+          readinessProbe:
+            {{- toYaml .Values.servarr.readinessProbe | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/loki/config
+            - name: runtime-config
+              mountPath: /etc/loki/runtime-config
+            - name: tmp
+              mountPath: /tmp
+            - name: data
+              mountPath: /var/loki
+            {{- if .Values.enterprise.enabled }}
+            - name: license
+              mountPath: /etc/loki/license
+            {{- end}}
+            {{- with .Values.readarr.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.readarr.resources | nindent 12 }}
+      {{- with .Values.readarr.affinity }}
+      affinity:
+        {{- tpl . $ | nindent 8 }}
+      {{- end }}
+      {{- with .Values.readarr.dnsConfig }}
+      dnsConfig:
+        {{- tpl . $ | nindent 8 }}
+      {{- end }}
+      {{- with .Values.readarr.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.readarr.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: data
+          emptyDir: {}
+        - name: config
+          {{- if .Values.servarr.existingSecretForConfig }}
+          secret:
+            secretName: {{ .Values.servarr.existingSecretForConfig }}
+          {{- else }}
+          {{- include "servarr.configVolume" . | nindent 10 }}
+          {{- end }}
+        - name: runtime-config
+          configMap:
+            name: {{ template "servarr.name" . }}-runtime
+        {{- if .Values.enterprise.enabled }}
+        - name: license
+          secret:
+          {{- if .Values.enterprise.useExternalLicense }}
+            secretName: {{ .Values.enterprise.externalLicenseName }}
+          {{- else }}
+            secretName: enterprise-logs-license
+          {{- end }}
+        {{- end }}
+        {{- with .Values.readarr.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+{{- end }}

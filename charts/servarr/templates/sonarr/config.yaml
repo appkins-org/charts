@@ -1,0 +1,21 @@
+{{- if not .Values.sonarr.existingSecretForConfig -}}
+apiVersion: v1
+{{- if eq .Values.sonarr.configStorageType "Secret" }}
+kind: Secret
+{{- else }}
+kind: ConfigMap
+{{- end }}
+metadata:
+  name: {{ template "sonarr.name" . }}-config
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "sonarr.labels" . | nindent 4 }}
+{{- if eq .Values.sonarr.configStorageType "Secret" }}
+data:
+  config.xml: {{ include "sonarr.configData" . | b64enc }}
+{{- else }}
+data:
+  config.xml: |
+    {{ include "sonarr.configData" . | nindent 4 }}
+{{- end -}}
+{{- end }}

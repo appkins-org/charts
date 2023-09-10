@@ -36,6 +36,35 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
+common:
+  timezone: UTC
+
+  # -- Common annotations for all deployments/StatefulSets
+  annotations: {}
+  # -- Common annotations for all pods
+  podAnnotations: {}
+  # -- Common labels for all pods
+  podLabels: {}
+  # -- Common annotations for all services
+  serviceAnnotations: {}
+  # -- Common labels for all services
+  serviceLabels: {}
+  # -- The number of old ReplicaSets to retain to allow rollback
+  revisionHistoryLimit: 10
+  # -- The SecurityContext for Loki pods
+  podSecurityContext:
+    fsGroup: 10001
+    runAsGroup: 10001
+    runAsNonRoot: true
+    runAsUser: 10001
+  # -- The SecurityContext for Loki containers
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+    allowPrivilegeEscalation: false
+
 service:
   type: ClusterIP
   port: 80
@@ -93,48 +122,23 @@ sonarr:
     tag: latest
     pullPolicy: IfNotPresent
 
-  # -- environment variables.
-  # @default -- See below
   env:
-    # -- Set the container timezone
     TZ: UTC
+
+  configStorageType: ConfigMap
 
   # -- Configures service settings for the chart.
   # @default -- See values.yaml
   service:
-    main:
-      ports:
-        http:
-          port: 8989
+    port: 8989
 
   ingress:
-    # -- Enable and configure ingress settings for the chart under this key.
-    # @default -- See values.yaml
-    main:
-      enabled: false
+    enabled: false
 
-  # -- Configures the probes for the main Pod.
-  # @default -- See values.yaml
-  probes:
-    liveness:
-      enabled: true
-      ## Set this to true if you wish to specify your own livenessProbe
-      custom: true
-      ## The spec field contains the values for the default livenessProbe.
-      ## If you selected custom: true, this field holds the definition of the livenessProbe.
-      spec:
-        exec:
-          command:
-          - /usr/bin/env
-          - bash
-          - -c
-          - curl --fail localhost:8989/api/v3/system/status?apiKey=`IFS=\> && while
-            read -d \< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`
-        failureThreshold: 5
-        initialDelaySeconds: 60
-        periodSeconds: 10
-        successThreshold: 1
-        timeoutSeconds: 10
+  extraEnv: []
+  extraEnvFrom: []
+
+  readinessProbe: {}
 
   # -- Configure persistence settings for the chart under this key.
   ## Config persistence is required for the Prometheus exporter sidecar.
@@ -193,6 +197,7 @@ sonarr:
 ###
 prowlarr:
   enabled: true
+
   image:
     repository: lscr.io/linuxserver/prowlarr
     tag: latest
@@ -202,18 +207,10 @@ prowlarr:
     TZ: UTC
 
   service:
-    main:
-      ports:
-        http:
-          port: 9696
+    port: 9696
 
   ingress:
-    main:
-      enabled: false
-
-  persistence:
-    config:
-      enabled: false
+    enabled: false
 
 ###
 # Radarr specific values
@@ -225,25 +222,14 @@ radarr:
     pullPolicy: IfNotPresent
     tag: latest
 
-  # -- environment variables.
-  # @default -- See below
   env:
-    # -- Set the container timezone
     TZ: UTC
 
-  # -- Configures service settings for the chart.
-  # @default -- See values.yaml
   service:
-    main:
-      ports:
-        http:
-          port: 7878
+    port: 7878
 
   ingress:
-    # -- Enable and configure ingress settings for the chart under this key.
-    # @default -- See values.yaml
-    main:
-      enabled: false
+    enabled: false
 
   # -- Configures the probes for the main Pod.
   # @default -- See values.yaml
@@ -322,8 +308,15 @@ radarr:
 
 lidarr:
   enabled: true
+
+  service:
+    port: 8686
+
 readarr:
   enabled: true
+
+  service:
+    port: 8787
 
 ###
 # Transmission specific values
