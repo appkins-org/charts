@@ -56,7 +56,6 @@ nodeSelector:
 image:
   tag: "<set me to the appropriate docker tag>"
 
-
 persistence:
   enabled: true
 
@@ -64,11 +63,11 @@ factorioServer:
   save_name: "<set me to your name>"
 
 #needed if playing online
-admin_list: [ ] # put your admins based on factorio names
+admin_list: [] # put your admins based on factorio names
 # - "john_doe"
 # - "jane_doe"
 
-white_list: [ ] # put the people you want to play with you based on factorio names
+white_list: [] # put the people you want to play with you based on factorio names
 # - "john_doe"
 # - "jane_doe"
 
@@ -93,19 +92,20 @@ account:
   #   password: <password in base64>
   #
   # accountSecret: account-secret
-  accountSecret: ''
+  accountSecret: ""
   # Your factorio.com login credentials. Required for games with visibility public
-  username: ''
-  password: ''
+  username: ""
+  password: ""
   # Authentication token. May be used instead of password above.
-  token: ''
+  token: ""
 
 serverPassword:
   # password required to log into the factorio server
-  game_password: ''
+  game_password: ""
   # Existing Secret containing a `game_password` data entry
-  passwordSecret: ''
+  passwordSecret: ""
 ```
+
 ## Importing a save file
 
 > :warning: Importing a save file will **OVERWRITE THE SERVER SAVEFILE** with the name specified in `factorioServer.save_name`. Import with caution!
@@ -132,7 +132,6 @@ kubectl cp ./my_existing_savegame.zip <namespace>/<pod_name>:/factorio/save-impo
 
 Restart the pod again to import your save file.
 
-
 ## Installing mods
 
 To Install mods, change `mods.enabled` to `true`, add any offical mods by their URL name under the `mods.portal`
@@ -156,9 +155,11 @@ mods:
     - url: "https://github.com/Suprcheese/Squeak-Through/archive/refs/tags/1.8.2.zip"
       name: "Squeak Through_1.8.2.zip"
 ```
+
 If the Factorio server doesn't start, check that the logs don't have an error with the mods. They are pretty verbose.
 
 ### Space Exploration and other overhaul mods
+
 It is possible that your mod may extend the default settings. As a result, your server might not start properly and instead throw an error.
 
 While we expose all the default settings, we would not be able to determine what is needed if it is absent. To add new settings you would need to convert the desired json file into a yaml struct as we are mounting all configurations as a config map into the container.
@@ -167,7 +168,8 @@ the issue with Space Exploration, as an example, was that the `autoplace_control
 
 At the time of writing, to make these changes you would need to add this to your values.yaml file to override their default values in the chart.
 
-> **_NOTE:_**  These settings may change and it is important to check with the mod maintainer/community to check the recommended settings.
+> **_NOTE:_** These settings may change and it is important to check with the mod maintainer/community to check the recommended settings.
+
 ```
 map_settings:
   pollution:
@@ -189,6 +191,7 @@ map_gen_settings:
     control-setting:moisture:bias: '0.05'
     control-setting:aux:bias: '-0.35'
 ```
+
 More information about the debugging process for the space exploration mod can be read on [Issue 24](https://github.com/SQLJames/factorio/issues/24).
 
 If you do run into any issues with mods, I will try to work with you on finding the right settings and document them as well.
@@ -198,7 +201,7 @@ If you do run into any issues with mods, I will try to work with you on finding 
 ### Kubernetes Parameters
 
 | Name                        | Description                                        | Value      |
-|-----------------------------|----------------------------------------------------|------------|
+| --------------------------- | -------------------------------------------------- | ---------- |
 | `replicaCount`              | Number of replicas to create (only 1 is supported) | `1`        |
 | `nodeSelector`              | Node labels for pod assignment                     | `{}`       |
 | `resources.requests.cpu`    | The requested cpu for the Factorio containers      | `500m`     |
@@ -211,7 +214,7 @@ If you do run into any issues with mods, I will try to work with you on finding 
 ### Image Parameters
 
 | Name               | Description                                         | Value                    |
-|--------------------|-----------------------------------------------------|--------------------------|
+| ------------------ | --------------------------------------------------- | ------------------------ |
 | `image.repository` | Factorio image repository                           | `factoriotools/factorio` |
 | `image.tag`        | Factorio image tag (immutable tags are recommended) | `latest`                 |
 | `image.pullPolicy` | Factorio image pull policy                          | `Always`                 |
@@ -219,7 +222,7 @@ If you do run into any issues with mods, I will try to work with you on finding 
 ### Service Parameters
 
 | Name                            | Description                                                                                                                | Value      |
-|---------------------------------|----------------------------------------------------------------------------------------------------------------------------|------------|
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------- |
 | `service.type`                  | Factorio service type                                                                                                      | `NodePort` |
 | `service.port`                  | Factorio service port                                                                                                      | `31497`    |
 | `service.externalIPs`           | If you are able to map an external IP, set it here                                                                         |            |
@@ -230,7 +233,7 @@ If you do run into any issues with mods, I will try to work with you on finding 
 ### Persistence Configuration
 
 | Name                                | Description                                        | Value  |
-|-------------------------------------|----------------------------------------------------|--------|
+| ----------------------------------- | -------------------------------------------------- | ------ |
 | `persistence.enabled`               | Enable persistence using Persistent Volume Claims  | `true` |
 | `persistence.dataDir.Size`          | Persistent Volume size                             | `1Gi`  |
 | `persistence.dataDir.existingClaim` | The name of an existing PVC to use for persistence |        |
@@ -240,7 +243,7 @@ If you do run into any issues with mods, I will try to work with you on finding 
 ### Factorio Parameters
 
 | Name                                                           | Description                                                                                                                              | Value                            |
-|----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------|
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | `mods.enabled`                                                 | Enable mods                                                                                                                              | `false`                          |
 | `mods.portal`                                                  | List of official mods to be downloaded from Factorio Mod Portal                                                                          | `[]`                             |
 | `mods.unofficial`                                              | List of unofficial mods name and url to download into the mods folder                                                                    | `[]`                             |
@@ -283,7 +286,7 @@ If you do run into any issues with mods, I will try to work with you on finding 
 | `server_settings.maximum_segment_size_peer_count`              | Minimum network messages segment count                                                                                                   | `10`                             |
 | `rcon.external`                                                | Enable RCON external access (deploy RCON service)                                                                                        | `true`                           |
 | `rcon.type`                                                    | RCON service type                                                                                                                        | `LoadBalancer`                   |
-| `rcon.serviceAnnotations`                                      | RCON service annotations                                                                                                                        | `{}`                   |
+| `rcon.serviceAnnotations`                                      | RCON service annotations                                                                                                                 | `{}`                             |
 | `rcon.passwordSecret`                                          | Existing secret containing a `password` data field                                                                                       | `""`                             |
 | `rcon.password`                                                | Password for RCON, ignored if `rcon.passwordSecret` is set                                                                               | `CHANGEMECHANGEME`               |
 | `rcon.port`                                                    | RCON service external port                                                                                                               | `30100`                          |

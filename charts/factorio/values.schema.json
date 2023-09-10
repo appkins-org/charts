@@ -4,39 +4,33 @@
   "type": "object",
   "title": "The root schema",
   "default": {},
-  "required": [
-      "rcon"
-  ],
+  "required": ["rcon"],
   "properties": {
-      "rcon": {
-          "$id": "#/properties/rcon",
-          "type": "object",
-          "title": "The rcon schema",
-          "description": "houses the information about the rcon service",
-          "default": {},
-          "examples": [
-              {
-                  "password": "1234Test"
-              }
-          ],
-          "required": [
-              "password"
-          ],
-          "properties": {
-              "password": {
-                  "$id": "#/properties/rcon/properties/password",
-                  "type": "string",
-                  "minLength": 15,
-                  "title": "The password schema",
-                  "description": "Sets rcon password",
-                  "default": "",
-                  "examples": [
-                      "1234Test"
-                  ]
-              }
-          },
-          "additionalProperties": true
-      }
+    "rcon": {
+      "$id": "#/properties/rcon",
+      "type": "object",
+      "title": "The rcon schema",
+      "description": "houses the information about the rcon service",
+      "default": {},
+      "examples": [
+        {
+          "password": "1234Test"
+        }
+      ],
+      "required": ["password"],
+      "properties": {
+        "password": {
+          "$id": "#/properties/rcon/properties/password",
+          "type": "string",
+          "minLength": 15,
+          "title": "The password schema",
+          "description": "Sets rcon password",
+          "default": "",
+          "examples": ["1234Test"]
+        }
+      },
+      "additionalProperties": true
+    }
   },
   "additionalProperties": true
 }

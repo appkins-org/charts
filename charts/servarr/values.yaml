@@ -25,10 +25,12 @@ serviceAccount:
 
 podAnnotations: {}
 
-podSecurityContext: {}
+podSecurityContext:
+  {}
   # fsGroup: 2000
 
-securityContext: {}
+securityContext:
+  {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -72,7 +74,8 @@ service:
 ingress:
   enabled: false
   className: ""
-  annotations: {}
+  annotations:
+    {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
@@ -85,7 +88,8 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
-resources: {}
+resources:
+  {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -116,7 +120,6 @@ flamarr:
     repository: pierremesure/flemmarr
     tag: latest
     pullPolicy: IfNotPresent
-
 
 sonarr:
   image:
@@ -168,7 +171,8 @@ sonarr:
       labels: {}
       # -- Configure additionial rules for the chart under this key.
       # @default -- See prometheusrules.yaml
-      rules: []
+      rules:
+        []
         # - alert: SonarrDown
         #   annotations:
         #     description: Sonarr service is down.
@@ -245,11 +249,11 @@ radarr:
       spec:
         exec:
           command:
-          - /usr/bin/env
-          - bash
-          - -c
-          - curl --fail localhost:7878/api/v3/system/status?apiKey=`IFS=\> && while
-            read -d \< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`
+            - /usr/bin/env
+            - bash
+            - -c
+            - curl --fail localhost:7878/api/v3/system/status?apiKey=`IFS=\> && while
+              read -d \< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`
         failureThreshold: 5
         initialDelaySeconds: 60
         periodSeconds: 10
@@ -282,7 +286,8 @@ radarr:
       labels: {}
       # -- Configure additionial rules for the chart under this key.
       # @default -- See prometheusrules.yaml
-      rules: []
+      rules:
+        []
         # - alert: RadarrDown
         #   annotations:
         #     description: Radarr service is down.
@@ -334,12 +339,12 @@ transmission:
       name: custom-webui
       image: curlimages/curl:latest
       command:
-      - "/bin/sh"
-      - "-c"
-      - "curl -o- -sL https://github.com/johman10/flood-for-transmission/releases/download/latest/flood-for-transmission.tar.gz | tar xzf - -C /config"
+        - "/bin/sh"
+        - "-c"
+        - "curl -o- -sL https://github.com/johman10/flood-for-transmission/releases/download/latest/flood-for-transmission.tar.gz | tar xzf - -C /config"
       volumeMounts:
-      - name: config
-        mountPath: /config
+        - name: config
+          mountPath: /config
       securityContext:
         runAsUser: 568
         runAsGroup: 568

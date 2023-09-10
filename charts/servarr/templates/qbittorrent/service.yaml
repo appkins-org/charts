@@ -14,14 +14,14 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 8080
-    targetPort: 8080
-    protocol: TCP
-    name: http
-  - port: 9022
-    targetPort: metrics
-    protocol: TCP
-    name: metrics
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+    - port: 9022
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
   selector:
     app.kubernetes.io/name: qbittorrent
     app.kubernetes.io/instance: qbittorrent

@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ include "prowlarr.fullname" . }}
+  name: { { include "prowlarr.fullname" . } }
 spec:
   source:
     repoURL: https://geek-cookbook.github.io/charts/
@@ -14,210 +14,210 @@ spec:
         - name: image.tag
           value: latest
       values: |-
-          env:
-            PUID: 0
-            PGID: 0
-            TZ: Etc/UTC
-            WEBUI_PORT: 8080
-          initContainers:
-            vuetorrent:
-              name: vuetorrent
-              image: busybox:latest
-              command: ['sh', '-c', 'wget -qO- https://github.com/WDaan/VueTorrent/releases/download/v1.6.1/vuetorrent.zip | unzip - -d /data']
-              volumeMounts:
-                - name: data
-                  mountPath: /data
-          additionalContainers:
-            gluetun:
-              name: gluetun
-              image: qmcgaw/gluetun:latest
-              env:
-                TZ: UTC
-                VPN_SERVICE_PROVIDER: nordvpn
-                VPN_TYPE: openvpn
-                WIREGUARD_PRIVATE_KEY: IIlDcfjM576ezkMzZI8i84w5Z0pL8hGNO1jU6bA8HnM=
-                SERVER_COUNTRIES: "United States"
-                SERVER_REGIONS: America
-                OPENVPN_USER: SNK7HpFbbhzET4zWpnwDFi6j
-                OPENVPN_PASSWORD: G5esWeu2szA2gJoAq8CKKw4M
-                FIREWALL_OUTBOUND_SUBNETS: 10.0.0.0/8
-                FIREWALL_INPUT_PORTS: 8080,8000,9022
-                FIREWALL_VPN_INPUT_PORTS: 6881
-                HTTP_CONTROL_SERVER_ADDRESS: ":8000"
-                HTTP_CONTROL_SERVER_LOG: on
-              securityContext:
-                capabilities:
-                  add:
-                    - NET_ADMIN
-                    - SYS_MODULE
-              ports:
-                - name: control-port
-                  containerPort: 8000
-                  protocol: TCP
-              livenessProbe:
-                httpGet:
-                  path: /v1/openvpn/status
-                  port: control-port
-                initialDelaySeconds: 30
-                failureThreshold: 1
-                periodSeconds: 60
-                terminationGracePeriodSeconds: 60
-                successThreshold: 1
-          configmap:
-            config:
-              enabled: true
-              labels: {}
-              annotations: {}
-              data:
-                qBittorrent.conf: |
-                  [AutoRun]
-                  enabled=false
-                  program=
-
-                  [Locking]
-                  locked=false
-
-                  [BitTorrent]
-                  Session\DefaultSavePath=/downloads/
-                  Session\Port=6881
-                  Session\QueueingSystemEnabled=true
-                  Session\TempPath=/downloads/
-
-                  [LegalNotice]
-                  Accepted=true
-
-                  [Meta]
-                  MigrationVersion=4
-
-                  [Network]
-                  PortForwardingEnabled=false
-
-                  [Preferences]
-                  Connection\PortRangeMin=6881
-                  Connection\UPnP=false
-                  Downloads\SavePath=/downloads/
-                  Downloads\TempPath=/downloads/
-                  WebUI\Address=*
-                  WebUI\Port=8080
-                  WebUI\ServerDomains=*
-                  WebUI\AlternativeUIEnabled=true
-                  WebUI\RootFolder=/data/vuetorrent
-                  WebUI\HostHeaderValidation=false
-                  WebUI\CSRFProtection=false
-                  WebUI\CustomHTTPHeadersEnabled=false
-                  WebUI\AuthSubnetWhitelistEnabled=true
-                  WebUI\AuthSubnetWhitelist=10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 0.0.0.0/0
-          securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-            fsGroup: 0
-          persistence:
-            config:
-              name: qbittorrent-config
-              enabled: true
-              mountPath: /config/qBittorrent/qBittorrent.conf
-              subPath: qBittorrent.conf
-              type: configMap
-            downloads:
-              enabled: true
-              mountPath: /downloads
-              storageClass: nfs-downloads
-              accessMode: ReadWriteMany
-              size: 20Gi
-            media:
-              enabled: true
-              mountPath: /media
-              storageClass: nfs-media
-              accessMode: ReadWriteMany
-              size: 200Gi
-            data:
-              enabled: true
-              name: data
-              mountPath: /data
-              storageClass: local-path
-              accessMode: ReadWriteOnce
-              size: 50Mi
-          probes:
-            liveness:
-              enabled: false
-              custom: true
-              spec:
-                exec:
-                  command:
-                  - sh
-                  - -c
-                  - if [ $(curl -s https://ipinfo.io/region) == 'Florida' ]; then exit 0; else exit $?; fi
-                initialDelaySeconds: 30
-                periodSeconds: 60
-                timeoutSeconds: 30
-                failureThreshold: 1
-            readiness:
-              enabled: false
-              custom: true
-              spec:
-                exec:
-                  command:
-                  - sh
-                  - -c
-                  - if [ $(curl -s https://ipinfo.io/region) == 'Florida' ]; then exit 0; else exit $?; fi
-                initialDelaySeconds: 30
-                periodSeconds: 60
-                timeoutSeconds: 30
-                failureThreshold: 1
-            startup:
-              enabled: false
-              custom: true
-              spec:
-                exec:
-                  command:
-                  - sh
-                  - -c
-                  - if [ $(curl -s https://ipinfo.io/region) == 'Florida' ]; then exit 0; else exit $?; fi
-                initialDelaySeconds: 30
-                periodSeconds: 60
-                timeoutSeconds: 30
-                failureThreshold: 30
-          metrics:
+        env:
+          PUID: 0
+          PGID: 0
+          TZ: Etc/UTC
+          WEBUI_PORT: 8080
+        initContainers:
+          vuetorrent:
+            name: vuetorrent
+            image: busybox:latest
+            command: ['sh', '-c', 'wget -qO- https://github.com/WDaan/VueTorrent/releases/download/v1.6.1/vuetorrent.zip | unzip - -d /data']
+            volumeMounts:
+              - name: data
+                mountPath: /data
+        additionalContainers:
+          gluetun:
+            name: gluetun
+            image: qmcgaw/gluetun:latest
+            env:
+              TZ: UTC
+              VPN_SERVICE_PROVIDER: nordvpn
+              VPN_TYPE: openvpn
+              WIREGUARD_PRIVATE_KEY: IIlDcfjM576ezkMzZI8i84w5Z0pL8hGNO1jU6bA8HnM=
+              SERVER_COUNTRIES: "United States"
+              SERVER_REGIONS: America
+              OPENVPN_USER: SNK7HpFbbhzET4zWpnwDFi6j
+              OPENVPN_PASSWORD: G5esWeu2szA2gJoAq8CKKw4M
+              FIREWALL_OUTBOUND_SUBNETS: 10.0.0.0/8
+              FIREWALL_INPUT_PORTS: 8080,8000,9022
+              FIREWALL_VPN_INPUT_PORTS: 6881
+              HTTP_CONTROL_SERVER_ADDRESS: ":8000"
+              HTTP_CONTROL_SERVER_LOG: on
+            securityContext:
+              capabilities:
+                add:
+                  - NET_ADMIN
+                  - SYS_MODULE
+            ports:
+              - name: control-port
+                containerPort: 8000
+                protocol: TCP
+            livenessProbe:
+              httpGet:
+                path: /v1/openvpn/status
+                port: control-port
+              initialDelaySeconds: 30
+              failureThreshold: 1
+              periodSeconds: 60
+              terminationGracePeriodSeconds: 60
+              successThreshold: 1
+        configmap:
+          config:
             enabled: true
-            serviceMonitor:
-              interval: 15s
-              scrapeTimeout: 5s
-              labels: {}
-            prometheusRule:
-              enabled: true
-              labels: {}
-              rules:
-              - alert: qBittorrentDown
-                annotations:
-                  description: qBittorrent service is down.
-                  summary: qBittorrent is down.
-                expr: |
-                  qbittorrent_up == 0
-                for: 5m
-                labels:
-                  severity: critical
-            exporter:
-              image:
-                repository: esanchezm/prometheus-qbittorrent-exporter
-                tag: latest
-                pullPolicy: IfNotPresent
-              env:
-                user: "admin"
-                password: "adminadmin"
-                port: 9022
-                logLevel: ERROR
-          service:
-            main:
-              ports:
-                http:
-                  port: 8080
-                  targetPort: 8080
-            bittorrent:
-              enabled: false
-              type: ClusterIP
-              ports:
-                bittorrent:
-                  enabled: true
-                  port: 6881
-                  protocol: TCP
-                  targetPort: 6881
+            labels: {}
+            annotations: {}
+            data:
+              qBittorrent.conf: |
+                [AutoRun]
+                enabled=false
+                program=
+
+                [Locking]
+                locked=false
+
+                [BitTorrent]
+                Session\DefaultSavePath=/downloads/
+                Session\Port=6881
+                Session\QueueingSystemEnabled=true
+                Session\TempPath=/downloads/
+
+                [LegalNotice]
+                Accepted=true
+
+                [Meta]
+                MigrationVersion=4
+
+                [Network]
+                PortForwardingEnabled=false
+
+                [Preferences]
+                Connection\PortRangeMin=6881
+                Connection\UPnP=false
+                Downloads\SavePath=/downloads/
+                Downloads\TempPath=/downloads/
+                WebUI\Address=*
+                WebUI\Port=8080
+                WebUI\ServerDomains=*
+                WebUI\AlternativeUIEnabled=true
+                WebUI\RootFolder=/data/vuetorrent
+                WebUI\HostHeaderValidation=false
+                WebUI\CSRFProtection=false
+                WebUI\CustomHTTPHeadersEnabled=false
+                WebUI\AuthSubnetWhitelistEnabled=true
+                WebUI\AuthSubnetWhitelist=10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 0.0.0.0/0
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+          fsGroup: 0
+        persistence:
+          config:
+            name: qbittorrent-config
+            enabled: true
+            mountPath: /config/qBittorrent/qBittorrent.conf
+            subPath: qBittorrent.conf
+            type: configMap
+          downloads:
+            enabled: true
+            mountPath: /downloads
+            storageClass: nfs-downloads
+            accessMode: ReadWriteMany
+            size: 20Gi
+          media:
+            enabled: true
+            mountPath: /media
+            storageClass: nfs-media
+            accessMode: ReadWriteMany
+            size: 200Gi
+          data:
+            enabled: true
+            name: data
+            mountPath: /data
+            storageClass: local-path
+            accessMode: ReadWriteOnce
+            size: 50Mi
+        probes:
+          liveness:
+            enabled: false
+            custom: true
+            spec:
+              exec:
+                command:
+                - sh
+                - -c
+                - if [ $(curl -s https://ipinfo.io/region) == 'Florida' ]; then exit 0; else exit $?; fi
+              initialDelaySeconds: 30
+              periodSeconds: 60
+              timeoutSeconds: 30
+              failureThreshold: 1
+          readiness:
+            enabled: false
+            custom: true
+            spec:
+              exec:
+                command:
+                - sh
+                - -c
+                - if [ $(curl -s https://ipinfo.io/region) == 'Florida' ]; then exit 0; else exit $?; fi
+              initialDelaySeconds: 30
+              periodSeconds: 60
+              timeoutSeconds: 30
+              failureThreshold: 1
+          startup:
+            enabled: false
+            custom: true
+            spec:
+              exec:
+                command:
+                - sh
+                - -c
+                - if [ $(curl -s https://ipinfo.io/region) == 'Florida' ]; then exit 0; else exit $?; fi
+              initialDelaySeconds: 30
+              periodSeconds: 60
+              timeoutSeconds: 30
+              failureThreshold: 30
+        metrics:
+          enabled: true
+          serviceMonitor:
+            interval: 15s
+            scrapeTimeout: 5s
+            labels: {}
+          prometheusRule:
+            enabled: true
+            labels: {}
+            rules:
+            - alert: qBittorrentDown
+              annotations:
+                description: qBittorrent service is down.
+                summary: qBittorrent is down.
+              expr: |
+                qbittorrent_up == 0
+              for: 5m
+              labels:
+                severity: critical
+          exporter:
+            image:
+              repository: esanchezm/prometheus-qbittorrent-exporter
+              tag: latest
+              pullPolicy: IfNotPresent
+            env:
+              user: "admin"
+              password: "adminadmin"
+              port: 9022
+              logLevel: ERROR
+        service:
+          main:
+            ports:
+              http:
+                port: 8080
+                targetPort: 8080
+          bittorrent:
+            enabled: false
+            type: ClusterIP
+            ports:
+              bittorrent:
+                enabled: true
+                port: 6881
+                protocol: TCP
+                targetPort: 6881

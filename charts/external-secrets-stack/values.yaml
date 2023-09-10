@@ -195,13 +195,13 @@ kube-prometheus-stack:
         enabled: true
 
   extraManifests:
-  - apiVersion: v1
-    kind: Namespace
-    metadata:
-      name: monitoring
-      labels:
-        app: kube-prometheus-stack
-        app.kubernetes.io/instance: cilium
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: monitoring
+        labels:
+          app: kube-prometheus-stack
+          app.kubernetes.io/instance: cilium
 
   thanosRuler:
     enabled: true
@@ -240,23 +240,23 @@ kube-prometheus-stack:
         datasources:
           - name: Prometheus
             type: prometheus
-            url: 'http://prometheus-server.kube-system.svc.cluster.local:9090'
+            url: "http://prometheus-server.kube-system.svc.cluster.local:9090"
             editable: true
             isDefault: true
 
           - name: Tempo
             uid: traces
             type: tempo
-            url: 'http://tempo.kube-system.svc.cluster.local:3200'
+            url: "http://tempo.kube-system.svc.cluster.local:3200"
             access: proxy
             basicAuth: false
     dashboardProviders:
       dashboardproviders.yaml:
         apiVersion: 1
         providers:
-          - name: 'default'
+          - name: "default"
             orgId: 1
-            folder: ''
+            folder: ""
             type: file
             disableDeletion: false
             editable: true
@@ -364,7 +364,7 @@ minio:
   enabled: true
   fullnameOverride: minio
   nameOverride: minio
-  replicas: '{{ .Values.global.replicas }}'
+  replicas: "{{ .Values.global.replicas }}"
   mode: standalone
   rootUser: minio
   rootPassword: minio123
@@ -474,6 +474,6 @@ tempo:
       s3:
         access_key: '{{ include "external-secrets-stack.minio.user" .}}'
         secret_key: '{{ include "external-secrets-stack.minio.password" .}}'
-        bucket: 'tempo'
+        bucket: "tempo"
         endpoint: '{{ include "minio.endpoint" .}}'
         insecure: true

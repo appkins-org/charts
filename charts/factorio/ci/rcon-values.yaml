@@ -9,4 +9,4 @@ server_settings:
   name: "ClusterIP Test"
 
 serverPassword:
-  game_password: 'CHANGEME'
+  game_password: "CHANGEME"
