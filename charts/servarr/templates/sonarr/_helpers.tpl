@@ -50,7 +50,7 @@ priorityClassName: {{ $pcn }}
   <SslCertPath></SslCertPath>
   <SslCertPassword></SslCertPassword>
   <UrlBase></UrlBase>
-  <InstanceName>{{ $key }}</InstanceName>
+  <InstanceName>sonarr</InstanceName>
   <UpdateMechanism>Docker</UpdateMechanism>
   <AnalyticsEnabled>False</AnalyticsEnabled>
 </Config>

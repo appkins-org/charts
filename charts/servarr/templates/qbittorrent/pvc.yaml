@@ -1,0 +1,60 @@
+---
+# Source: qbittorrent/templates/common.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: qbittorrent-data
+  labels:
+    app.kubernetes.io/instance: qbittorrent
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: qbittorrent
+    app.kubernetes.io/version: v4.4.2
+    helm.sh/chart: qbittorrent-13.5.2
+  annotations:
+spec:
+  accessModes:
+    - "ReadWriteOnce"
+  resources:
+    requests:
+      storage: "50Mi"
+  storageClassName: "local-path"
+---
+# Source: qbittorrent/templates/common.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: qbittorrent-downloads
+  labels:
+    app.kubernetes.io/instance: qbittorrent
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: qbittorrent
+    app.kubernetes.io/version: v4.4.2
+    helm.sh/chart: qbittorrent-13.5.2
+  annotations:
+spec:
+  accessModes:
+    - "ReadWriteMany"
+  resources:
+    requests:
+      storage: "20Gi"
+  storageClassName: "nfs-downloads"
+---
+# Source: qbittorrent/templates/common.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: qbittorrent-media
+  labels:
+    app.kubernetes.io/instance: qbittorrent
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: qbittorrent
+    app.kubernetes.io/version: v4.4.2
+    helm.sh/chart: qbittorrent-13.5.2
+  annotations:
+spec:
+  accessModes:
+    - "ReadWriteMany"
+  resources:
+    requests:
+      storage: "200Gi"
+  storageClassName: "nfs-media"

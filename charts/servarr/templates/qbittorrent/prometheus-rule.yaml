@@ -1,0 +1,44 @@
+---
+# Source: qbittorrent/templates/prometheusrules.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: qbittorrent
+  labels:
+    helm.sh/chart: qbittorrent-13.5.2
+    app.kubernetes.io/name: qbittorrent
+    app.kubernetes.io/instance: qbittorrent
+    app.kubernetes.io/version: "v4.4.2"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  groups:
+    - name: qbittorrent
+      rules:
+        - alert: qBittorrentExporterAbsent
+          annotations:
+            description: qBittorrent Exporter has disappeared from Prometheus
+              service discovery.
+            summary: qBittorrent Exporter is down.
+          expr: |
+            absent(up{job=~".*qbittorrent.*"} == 1)
+          for: 5m
+          labels:
+            severity: critical
+        - alert: qBittorrentDown
+          annotations:
+            description: qBittorrent service is down.
+            summary: qBittorrent is down.
+          expr: |
+            qbittorrent_up{job=~".*qbittorrent.*"} == 0
+          for: 5m
+          labels:
+            severity: critical
+        - alert: qBittorrentDown
+          annotations:
+            description: qBittorrent service is down.
+            summary: qBittorrent is down.
+          expr: |
+            qbittorrent_up == 0
+          for: 5m
+          labels:
+            severity: critical

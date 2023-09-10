@@ -74,41 +74,13 @@ Return the appropriate apiVersion for ingress.
   {{- end -}}
 {{- end -}}
 
-{{- define "transmission.fullname" -}}
-{{- default "transmission" .Values.transmission.fullname }}
-{{- end }}
-
-{{- define "transmission.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- include "transmission.fullname" . }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}
-
-
-{{- define "transmission.labels" -}}
-helm.sh/chart: {{ include "servarr.chart" . }}
-{{ include "transmission.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
-
-{{- define "transmission.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "servarr.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/component: transmission
-{{- end }}
-
 {{- define "prowlarr.name" -}}
-{{- default "prowlarr" .Values.prowlarr.name }}
+{{ default "prowlarr" .Values.prowlarr.name }}
 {{- end -}}
 
 {{- define "prowlarr.port" -}}
-{{- default 8989 .Values.prowlarr.port }}
-{{- end }}
+{{ default 8989 .Values.prowlarr.port }}
+{{- end -}}
 
 {{- define "servarr.components" -}}
 {{- range $key, $val := pick .Values "sonarr" "radarr" "lidarr" "readarr" "prowlarr" -}}

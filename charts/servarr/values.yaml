@@ -112,8 +112,10 @@ affinity: {}
 
 flamarr:
   name: flemmarr
-  image: pierremesure/flemmarr
-  config:
+  image:
+    repository: pierremesure/flemmarr
+    tag: latest
+    pullPolicy: IfNotPresent
 
 
 sonarr:

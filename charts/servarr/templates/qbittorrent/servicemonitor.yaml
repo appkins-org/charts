@@ -1,0 +1,22 @@
+---
+# Source: qbittorrent/templates/servicemonitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: qbittorrent
+  labels:
+    helm.sh/chart: qbittorrent-13.5.2
+    app.kubernetes.io/name: qbittorrent
+    app.kubernetes.io/instance: qbittorrent
+    app.kubernetes.io/version: "v4.4.2"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: qbittorrent
+      app.kubernetes.io/instance: qbittorrent
+  endpoints:
+    - port: metrics
+      interval: 15s
+      scrapeTimeout: 5s
+      path: /metrics

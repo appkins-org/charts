@@ -22,17 +22,3 @@ version: 0.1.0
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "1.16.0"
-
-dependencies:
-  - name: transmission
-    version: "^8.4.3"
-    repository: https://geek-cookbook.github.io/charts/
-  - name: sonarr
-    version: "^16.3.2"
-    repository: https://geek-cookbook.github.io/charts/
-  - name: radarr
-    version: "^16.3.2"
-    repository: https://geek-cookbook.github.io/charts/
-  - name: prowlarr
-    version: "^4.5.2"
-    repository: https://geek-cookbook.github.io/charts/

@@ -3,10 +3,11 @@ Prowlarr fullname
 */}}
 {{- define "prowlarr.fullName" -}}
 {{- if .Values.prowlarr.name }}
-{{- default "prowlarr" .Values.prowlarr.name -}}
-{{- else }}
-{{ include "servarr.name" . }}-prowlarr
-{{- end }}
+{{ default "prowlarr" .Values.prowlarr.name }}
+{{- else -}}
+{{ printf "%s-prowlarr" (include "servarr.name" .) }}
+{{- end -}}
+{{- end -}}
 
 {{/*
 Prowlarr common labels

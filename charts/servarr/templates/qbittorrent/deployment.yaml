@@ -1,0 +1,163 @@
+---
+# Source: qbittorrent/templates/common.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+  labels:
+    app.kubernetes.io/instance: qbittorrent
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: qbittorrent
+    app.kubernetes.io/version: v4.4.2
+    helm.sh/chart: qbittorrent-13.5.2
+spec:
+  revisionHistoryLimit: 3
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: qbittorrent
+      app.kubernetes.io/instance: qbittorrent
+  template:
+    metadata:
+      annotations:
+
+        checksum/config: 56600d5d458a568735bc1c50312de04c15446a3a748a5f3281a4896a548f7db5
+      labels:
+        app.kubernetes.io/name: qbittorrent
+        app.kubernetes.io/instance: qbittorrent
+    spec:
+
+      serviceAccountName: default
+      automountServiceAccountToken: true
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: true
+      initContainers:
+        - command:
+          - sh
+          - -c
+          - wget -qO- https://github.com/WDaan/VueTorrent/releases/download/v1.6.1/vuetorrent.zip
+            | unzip - -d /data
+          image: busybox:latest
+          name: vuetorrent
+          volumeMounts:
+          - mountPath: /data
+            name: data
+      containers:
+        - name: qbittorrent
+          image: "ghcr.io/k8s-at-home/qbittorrent:v4.4.2"
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            fsGroup: 0
+            runAsGroup: 0
+            runAsUser: 0
+          env:
+            - name: PGID
+              value: "0"
+            - name: PUID
+              value: "0"
+            - name: TZ
+              value: Etc/UTC
+            - name: WEBUI_PORT
+              value: "8080"
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: metrics
+              containerPort: 9022
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /config/qBittorrent/qBittorrent.conf
+              subPath: qBittorrent.conf
+            - name: data
+              mountPath: /data
+            - name: downloads
+              mountPath: /downloads
+            - name: media
+              mountPath: /media
+
+        - env:
+          - name: QBITTORRENT_HOST
+            value: http://localhost
+          - name: QBITTORRENT_PORT
+            value: "8080"
+          - name: QBITTORRENT_USER
+            value: admin
+          - name: QBITTORRENT_PASS
+            value: adminadmin
+          - name: EXPORTER_PORT
+            value: "9022"
+          - name: EXPORTER_LOG_LEVEL
+            value: ERROR
+          image: esanchezm/prometheus-qbittorrent-exporter:latest
+          imagePullPolicy: IfNotPresent
+          name: exporter
+          ports:
+          - containerPort: 9022
+            name: metrics
+        - env:
+          - name: FIREWALL_INPUT_PORTS
+            value: 8080,8000,9022
+          - name: FIREWALL_OUTBOUND_SUBNETS
+            value: 10.0.0.0/8
+          - name: FIREWALL_VPN_INPUT_PORTS
+            value: "6881"
+          - name: HTTP_CONTROL_SERVER_ADDRESS
+            value: :8000
+          - name: HTTP_CONTROL_SERVER_LOG
+            value: "true"
+          - name: OPENVPN_PASSWORD
+            value: G5esWeu2szA2gJoAq8CKKw4M
+          - name: OPENVPN_USER
+            value: SNK7HpFbbhzET4zWpnwDFi6j
+          - name: SERVER_COUNTRIES
+            value: United States
+          - name: SERVER_REGIONS
+            value: America
+          - name: TZ
+            value: UTC
+          - name: VPN_SERVICE_PROVIDER
+            value: nordvpn
+          - name: VPN_TYPE
+            value: openvpn
+          - name: WIREGUARD_PRIVATE_KEY
+            value: IIlDcfjM576ezkMzZI8i84w5Z0pL8hGNO1jU6bA8HnM=
+          image: qmcgaw/gluetun:latest
+          livenessProbe:
+            failureThreshold: 1
+            httpGet:
+              path: /v1/openvpn/status
+              port: control-port
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            successThreshold: 1
+            terminationGracePeriodSeconds: 60
+          name: gluetun
+          ports:
+          - containerPort: 8000
+            name: control-port
+            protocol: TCP
+          securityContext:
+            capabilities:
+              add:
+              - NET_ADMIN
+              - SYS_MODULE
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "qbittorrent.name" . }}-config
+            items:
+              - key: "qBittorrent.conf"
+                path: "qBittorrent.conf"
+        - name: data
+          persistentVolumeClaim:
+            claimName: qbittorrent-data
+        - name: downloads
+          persistentVolumeClaim:
+            claimName: qbittorrent-downloads
+        - name: media
+          persistentVolumeClaim:
+            claimName: qbittorrent-media
