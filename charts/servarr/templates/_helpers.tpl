@@ -74,14 +74,6 @@ Return the appropriate apiVersion for ingress.
   {{- end -}}
 {{- end -}}
 
-{{- define "prowlarr.name" -}}
-{{ default "prowlarr" .Values.prowlarr.name }}
-{{- end -}}
-
-{{- define "prowlarr.port" -}}
-{{ default 8989 .Values.prowlarr.port }}
-{{- end -}}
-
 {{- define "servarr.components" -}}
 {{- range $key, $val := pick .Values "sonarr" "radarr" "lidarr" "readarr" "prowlarr" -}}
 {{- if or $val.enabled (eq $key "prowlarr") -}}
@@ -89,4 +81,4 @@ Return the appropriate apiVersion for ingress.
   {{ toYaml $val | nindent 2 }}
 {{- end -}}
 {{- end -}}
-
+{{- end -}}

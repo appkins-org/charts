@@ -106,7 +106,7 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 100
   targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
 
 nodeSelector: {}
 
@@ -122,32 +122,60 @@ flamarr:
     pullPolicy: IfNotPresent
 
 sonarr:
+  name: sonarr
+  enabled: true
+
   image:
     repository: lscr.io/linuxserver/sonarr
     tag: latest
     pullPolicy: IfNotPresent
 
+  terminationGracePeriodSeconds: 30
+
   env:
     TZ: UTC
 
+  annotations: {}
+  podLabels: {}
+  selectorLabels: {}
+  podAnnotations: {}
+  affinity: {}
+  extraArgs: []
+  # -- Environment variables to add to the canary pods
+  extraEnv: []
+  # -- Environment variables from secrets or configmaps to add to the canary pods
+  extraEnvFrom: []
+  # -- Resource requests and limits for the canary
+  resources: {}
+  # -- DNS config for canary pods
+  dnsConfig: {}
+  # -- Node selector for canary pods
+  nodeSelector: {}
+  # -- Tolerations for canary pods
+  tolerations: []
+  # -- The name of the PriorityClass for loki-canary pods
+  priorityClassName: null
+
   configStorageType: ConfigMap
 
-  # -- Configures service settings for the chart.
-  # @default -- See values.yaml
+  replicas: 2
+
   service:
     port: 8989
 
   ingress:
     enabled: false
 
-  extraEnv: []
-  extraEnvFrom: []
+  autoscaling:
+    enabled: false
+
+  extraVolumes: []
+
+  existingSecretForConfig: null
+  externalConfigSecretName: ""
 
   readinessProbe: {}
 
-  # -- Configure persistence settings for the chart under this key.
-  ## Config persistence is required for the Prometheus exporter sidecar.
-  # @default -- See values.yaml
   persistence:
     config:
       enabled: false
@@ -203,6 +231,7 @@ sonarr:
 ###
 prowlarr:
   enabled: true
+  name: prowlarr
 
   image:
     repository: lscr.io/linuxserver/prowlarr
@@ -216,6 +245,9 @@ prowlarr:
     port: 9696
 
   ingress:
+    enabled: false
+
+  autoscaling:
     enabled: false
 
 ###
@@ -235,6 +267,9 @@ radarr:
     port: 7878
 
   ingress:
+    enabled: false
+
+  autoscaling:
     enabled: false
 
   # -- Configures the probes for the main Pod.
@@ -314,16 +349,66 @@ radarr:
         unknownQueueItems: false
 
 lidarr:
+  name: lidarr
   enabled: true
+
+  image:
+    repository: lscr.io/linuxserver/lidarr
+    pullPolicy: IfNotPresent
+    tag: latest
 
   service:
     port: 8686
 
+  autoscaling:
+    enabled: false
+
 readarr:
+  name: readarr
   enabled: true
+
+  image:
+    repository: lscr.io/linuxserver/readarr
+    pullPolicy: IfNotPresent
+    tag: latest
 
   service:
     port: 8787
+
+  autoscaling:
+    enabled: false
+
+  annotations: {}
+
+qbittorrent:
+  name: qbittorrent
+  image:
+    repository: lscr.io/linuxserver/sonarr
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  env:
+    TZ: UTC
+
+  configStorageType: ConfigMap
+
+  service:
+    port: 8000
+
+  ingress:
+    enabled: false
+
+  autoscaling:
+    enabled: false
+
+  extraEnv: []
+  extraEnvFrom: []
+  extraVolumes: []
+
+  existingSecretForConfig: null
+  externalConfigSecretName: ""
+
+  readinessProbe: {}
 
 ###
 # Transmission specific values

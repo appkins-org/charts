@@ -29,7 +29,7 @@ priorityClassName: {{ $pcn }}
 {{- end }}
 
 {{- define "qbittorrent.port" -}}
-{{- default 8080 .Values.qbittorrent.service.port }}
+{{- default 8000 .Values.qbittorrent.service.port }}
 {{- end }}
 
 {{- define "qbittorrent.apiKey" -}}

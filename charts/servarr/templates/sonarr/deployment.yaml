@@ -4,18 +4,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "sonarr.name" . }}
-  namespace: {{ $.Release.Namespace }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "sonarr.labels" . | nindent 4 }}
-  {{- if not (empty .Values.servarr.annotations) }}
-  annotations:
-    {{- with .Values.servarr.annotations }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-    {{- with .Values.sonarr.annotations }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-  {{- end }}
 spec:
   {{- if not .Values.sonarr.autoscaling.enabled }}
   replicas: {{ .Values.sonarr.replicas }}
@@ -24,7 +15,7 @@ spec:
     rollingUpdate:
       maxSurge: 0
       maxUnavailable: 1
-  revisionHistoryLimit: {{ .Values.servarr.revisionHistoryLimit }}
+  revisionHistoryLimit: {{ .Values.common.revisionHistoryLimit }}
   selector:
     matchLabels:
       {{- include "sonarr.selectorLabels" . | nindent 6 }}
@@ -32,7 +23,7 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print .Template.BasePath "/sonarr/config.yaml") . | sha256sum }}
-        {{- with .Values.servarr.podAnnotations }}
+        {{- with .Values.common.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
         {{- with .Values.sonarr.podAnnotations }}
@@ -40,7 +31,7 @@ spec:
         {{- end }}
       labels:
         {{- include "sonarr.selectorLabels" . | nindent 8 }}
-        {{- with .Values.servarr.podLabels }}
+        {{- with .Values.common.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
         {{- with .Values.sonarr.podLabels }}
@@ -51,36 +42,25 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ include "servarr.serviceAccountName" . }}
-      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- include "sonarr.priorityClassName" . | nindent 6 }}
       securityContext:
-        {{- toYaml .Values.servarr.podSecurityContext | nindent 8 }}
+        {{- toYaml .Values.common.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: {{ .Values.sonarr.terminationGracePeriodSeconds }}
       containers:
         - name: sonarr
-          image: {{ printf "%s:%s" .Values.sonarr.image.repository (default "latest" .Values.sonarr.image.tag) | quote }}
+          image: "{{ .Values.sonarr.image.repository }}:{{ .Values.sonarr.image.tag }}"
           imagePullPolicy: {{ .Values.sonarr.image.pullPolicy }}
-          args:
-            - -config.file=/etc/loki/config/config.yaml
-            - -target={{ .Values.sonarr.targetModule }}
-            - -legacy-sonarr-mode=false
-            - -common.compactor-grpc-address={{ include "servarr.backendFullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}:9095
-            {{- with .Values.sonarr.extraArgs }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
           ports:
             - name: http
-              containerPort: {{ include "sonarr.port" . }}
+              containerPort: {{ default 8989 .Values.sonarr.service.port }}
               protocol: TCP
-
             - name: http-metrics
               containerPort: 3100
               protocol: TCP
-
           env:
             - name: TZ
               value: "{{ .Values.common.timezone | default "UTC" }}"
@@ -99,8 +79,8 @@ spec:
               - /usr/bin/env
               - bash
               - -c
-              - "curl --fail localhost:{{ include "sonarr.port" . }}/api/v3/system/status?apiKey=`IFS=\> && while
-                read -d \< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`"
+              - "curl --fail localhost:{{ include "sonarr.port" . }}/api/v3/system/status?apiKey=`IFS=\\> && while
+                read -d \\< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`"
             failureThreshold: 5
             initialDelaySeconds: 60
             periodSeconds: 10
@@ -121,8 +101,11 @@ spec:
             timeoutSeconds: 1
             periodSeconds: 5
 
-          readinessProbe:
-            {{- toYaml .Values.servarr.readinessProbe | nindent 12 }}
+        - name: exporter
+          image: ghcr.io/onedr0p/exportarr:latest
+          env:
+            - name: PORT
+              value: "9707"
           volumeMounts:
             - name: config
               mountPath: /etc/loki/config
@@ -132,15 +115,6 @@ spec:
               mountPath: /tmp
             - name: data
               mountPath: /var/loki
-            {{- if .Values.enterprise.enabled }}
-            - name: license
-              mountPath: /etc/loki/license
-            {{- end}}
-            {{- with .Values.sonarr.extraVolumeMounts }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
-          resources:
-            {{- toYaml .Values.sonarr.resources | nindent 12 }}
       {{- with .Values.sonarr.affinity }}
       affinity:
         {{- tpl . $ | nindent 8 }}
@@ -163,24 +137,11 @@ spec:
         - name: data
           emptyDir: {}
         - name: config
-          {{- if .Values.servarr.existingSecretForConfig }}
-          secret:
-            secretName: {{ .Values.servarr.existingSecretForConfig }}
-          {{- else }}
-          {{- include "servarr.configVolume" . | nindent 10 }}
-          {{- end }}
-        - name: runtime-config
           configMap:
-            name: {{ template "servarr.name" . }}-runtime
-        {{- if .Values.enterprise.enabled }}
-        - name: license
-          secret:
-          {{- if .Values.enterprise.useExternalLicense }}
-            secretName: {{ .Values.enterprise.externalLicenseName }}
-          {{- else }}
-            secretName: enterprise-logs-license
-          {{- end }}
-        {{- end }}
+          name: {{ template "sonarr.name" . }}-config
+          items:
+            - key: "config.xml"
+              path: "config.xml"
         {{- with .Values.sonarr.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
