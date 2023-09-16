@@ -96,3 +96,8 @@ affinity: {}
   #     - matchExpressions:
   #       - key: node-role.kubernetes.io/control-plane
   #         operator: Exists
+
+hostAliases:
+  - hostnames:
+      - kubernetes
+    ip: 127.0.0.1
