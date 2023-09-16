@@ -101,3 +101,9 @@ hostAliases:
   - hostnames:
       - kubernetes
     ip: 127.0.0.1
+
+# Additional volumes on the kube-vip DaemonSet definition.
+volumes: []
+
+# Additional VolumeMounts for the kube-vip DaemonSet definition.
+volumeMounts: []
