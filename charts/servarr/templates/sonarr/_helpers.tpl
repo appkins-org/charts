@@ -33,7 +33,7 @@ priorityClassName: {{ $pcn }}
 {{- end }}
 
 {{- define "sonarr.apiKey" -}}
-{{ default (uuidv4 | replace "-" "") .Values.sonarr.apiKey }}
+{{ .Values.sonarr.apiKey | default (uuidv4 | replace "-" "") }}
 {{- end -}}
 
 {{- define "sonarr.configData" -}}

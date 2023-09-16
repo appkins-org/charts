@@ -41,6 +41,8 @@ securityContext:
 common:
   timezone: UTC
 
+  priorityClassName: null
+
   # -- Common annotations for all deployments/StatefulSets
   annotations: {}
   # -- Common annotations for all pods
