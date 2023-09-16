@@ -11,3 +11,5 @@ kubeconfig
 charts/.*
 
 data/*.yaml
+.tmp
+.data
