@@ -8,22 +8,27 @@ CHARTS := $(patsubst charts/%/,%,$(dir $(wildcard charts/*/Chart.yaml)))
 ${CHARTS}:
 
 dep/update: ${CHARTS}
-	helm dependency update charts/$<
+	@helm dependency update charts/$<
 
 dep/build: ${CHARTS}
-	helm dependency build charts/$<
+	@helm dependency build charts/$<
 
 dep: ${CHARTS}
-	helm dependency update charts/$<
+	@helm dependency update charts/$<
 
 lint: ${CHARTS}
-	helm lint charts/$<
+	@helm lint charts/$<
 
 template: ${CHARTS}
-	helm template $< charts/$< -n kube-system | tee $(patsubst %,.data/%.yaml,$<)
+	@helm template $< charts/$< -n kube-system | tee $(patsubst %,.data/%.yaml,$<)
 
 deploy: ${CHARTS}
-	helm upgrade --install \
-							 -n kube-system \
-							 --kubeconfig ${KUBECONFIG} \
-							 $< charts/$<
+	@helm upgrade --install \
+							  -n kube-system \
+							  --kubeconfig ${KUBECONFIG} \
+							  $< charts/$<
+
+test:
+	@echo "🧪 Running tests..."
+	@helm dependency update "charts/common-test"
+	@helm unittest --update-snapshot -f "tests/*/*.yaml" "./charts/common-test"

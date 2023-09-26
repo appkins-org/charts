@@ -1,0 +1,25 @@
+apiVersion: v2
+appVersion: ""
+dependencies:
+  - name: common
+    repository: file://../common
+    version: ~14.0.0
+deprecated: false
+description: Helper chart to test different use cases of the common library
+home: https://github.com/appkins-org/charts/tree/main/charts/common-test
+icon: https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png
+keywords:
+  - common-test
+  - appkins
+  - common
+  - test
+kubeVersion: ">=1.16.0-0"
+maintainers:
+  - email: info@appkins.io
+    name: Appkins
+    url: https://appkins.io
+name: common-test
+sources:
+  - https://github.com/appkins-org/charts/tree/main/charts/common-test
+type: application
+version: 1.0.0

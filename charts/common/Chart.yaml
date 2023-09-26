@@ -1,0 +1,17 @@
+apiVersion: v2
+appVersion: "latest"
+description: Function library for Appkins charts
+home: https://github.com/appkins-org/charts/tree/main/charts/common
+icon: https://avatars.githubusercontent.com/u/76400755
+keywords:
+  - appkins-org
+  - library-chart
+  - common
+kubeVersion: ">=1.16.0-0"
+maintainers:
+  - email: info@appkins.io
+    name: TrueCharts
+    url: https://appkins.io
+name: common
+type: library
+version: 14.0.6

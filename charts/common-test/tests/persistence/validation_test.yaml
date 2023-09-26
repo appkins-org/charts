@@ -1,0 +1,159 @@
+suite: persistence validation test
+templates:
+  - common.yaml
+release:
+  name: test-release-name
+  namespace: test-release-namespace
+tests:
+  - it: should fail with annotations not a dict
+    set:
+      persistence:
+        volume1:
+          enabled: true
+          annotations: not-a-dict
+    asserts:
+      - failedTemplate:
+          errorMessage: Persistence - Expected <annotations> to be a dictionary, but got [string]
+
+  - it: should fail with labels not a dict
+    set:
+      persistence:
+        volume1:
+          enabled: true
+          labels: not-a-dict
+    asserts:
+      - failedTemplate:
+          errorMessage: Persistence - Expected <labels> to be a dictionary, but got [string]
+
+  - it: should fail with pod targetSelector not a map
+    set:
+      persistence:
+        volume1:
+          enabled: true
+          targetSelector: not-a-map
+    asserts:
+      - failedTemplate:
+          errorMessage: Persistence - Expected <targetSelector> to be [dict], but got [string]
+
+  - it: should fail with invalid type
+    set:
+      persistence:
+        volume1:
+          enabled: true
+          type: not-a-type
+    asserts:
+      - failedTemplate:
+          errorMessage: Persistence - Expected <type> to be one of [pvc, emptyDir, nfs, hostPath, ixVolume, secret, configmap, device], but got [not-a-type]
+
+  - it: should fail with invalid accessMode
+    set:
+      persistence:
+        volume1:
+          enabled: true
+          accessModes:
+            - not-an-access-mode
+    asserts:
+      - failedTemplate:
+          errorMessage: PVC - Expected <accessModes> entry to be one of [ReadWriteOnce, ReadOnlyMany, ReadWriteMany, ReadWriteOncePod], but got [not-an-access-mode]
+
+  - it: should fail without storageClassName in ixChartContext
+    set:
+      global:
+        namespace: ix-namespace
+        ixChartContext:
+          storageClassName: ""
+      persistence:
+        volume1:
+          enabled: true
+          type: pvc
+    asserts:
+      - failedTemplate:
+          errorMessage: PVC - Expected non-empty <global.ixChartContext.storageClassName>
+
+  - it: should fail without storageClassName in ixChartContext with SCALE-ZFS explicitly set
+    set:
+      global:
+        namespace: ix-namespace
+        ixChartContext:
+          storageClassName: ""
+      persistence:
+        volume1:
+          enabled: true
+          type: pvc
+          storageClass: SCALE-ZFS
+    asserts:
+      - failedTemplate:
+          errorMessage: PVC - Expected non-empty <global.ixChartContext.storageClassName> on [SCALE-ZFS] storageClass
+
+  - it: should fail with non-existent configmap
+    set:
+      configmap:
+        my-configmap:
+          enabled: true
+          data:
+            foo: bar
+      persistence:
+        volume1:
+          enabled: true
+          type: configmap
+          mountPath: /mnt/volume1
+          objectName: my-non-existent-configmap
+      workload:
+        main:
+          enabled: true
+          podSpec:
+            containers:
+              main:
+                enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: Persistence - Expected configmap [my-non-existent-configmap] defined in <objectName> to exist
+
+  - it: should fail with non-existent secret
+    set:
+      secret:
+        my-secret:
+          enabled: true
+          data:
+            foo: bar
+      persistence:
+        volume1:
+          enabled: true
+          type: secret
+          mountPath: /mnt/volume1
+          objectName: my-non-existent-secret
+      workload:
+        main:
+          enabled: true
+          podSpec:
+            containers:
+              main:
+                enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: Persistence - Expected secret [my-non-existent-secret] defined in <objectName> to exist
+
+  - it: should fail with namespace longer than 63 characters
+    set:
+      persistence:
+        volume1:
+          enabled: true
+          type: pvc
+          namespace: my-extra-super-duper-long-name-that-is-longer-than-63-characters
+    asserts:
+      - failedTemplate:
+          errorMessage: Persistent Volume Claim - Namespace [my-extra-super-duper-long-name-that-is-longer-than-63-characters] is not valid. Must start and end with an alphanumeric lowercase character. It can contain '-'. And must be at most 63 characters.
+
+  - it: should fail with namespace not starting with [ix-] in TrueNAS SCALE
+    set:
+      global:
+        ixChartContext:
+          iAmNotEmpty: true
+      persistence:
+        volume1:
+          enabled: true
+          type: pvc
+          namespace: my-namespace
+    asserts:
+      - failedTemplate:
+          errorMessage: Persistent Volume Claim - Namespace [my-namespace] expected to have [ix-] prefix when installed in TrueNAS SCALE
