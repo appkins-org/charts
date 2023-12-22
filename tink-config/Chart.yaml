@@ -1,0 +1,13 @@
+apiVersion: v2
+name: tink-config
+description: A Helm chart for managing additional Argo CD Applications and Projects
+type: application
+version: 0.1.0
+home: https://github.com/appkins-org/charts
+keywords:
+  - tinkerbell
+  - provisioning
+  - baremetal
+maintainers:
+  - name: appkins
+    url: https://appkins.github.io/

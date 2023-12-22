@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - charts/**/Chart.yaml
+      - ./**/Chart.yaml
 
 jobs:
   release:
@@ -79,8 +79,9 @@ jobs:
             helm repo add "${i}" "${repo}"
           done
 
-          for chart_dir in ../charts/*
+          for chart_path in ../**/Chart.yaml
           do
+            chart_dir="$(dirname "${chart_path}")"
             if [[ -d "${chart_dir}" ]]
             then
               chart="$(basename "${chart_dir}")"
@@ -117,10 +118,12 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
           path: '_site'
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2
