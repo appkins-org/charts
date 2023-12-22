@@ -13,12 +13,15 @@ metadata:
     rbac.authorization.kubernetes.io/autoupdate: "true"
   name: {{ include "kube-vip.name" . }}
 rules:
-  - apiGroups: [""]
-    resources: ["services", "services/status", "nodes", "endpoints"]
-    verbs: ["list","get","watch", "update"]
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
-    verbs: ["list", "get", "watch", "update", "create"]
+    verbs: ["list", "get", "watch", "update", "create", "put"]
+  - apiGroups: [""]
+    resources: [ "configmaps", "endpoints","events","services/status", "leases" ]
+    verbs: ["*"]
+  - apiGroups: [ "" ]
+    resources: [ "nodes", "services" ]
+    verbs: [ "list","get","watch","update" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
