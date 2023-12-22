@@ -18,7 +18,7 @@ spec:
       - command:
           - /kube-vip-cloud-provider
           - --leader-elect-resource-name=kube-vip-cloud-controller
-        image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+        image: {{ .Values.cloudProvider.image.repository }}:{{ .Values.cloudProvider.image.tag | default "latest" }}
         name: {{ include "kube-vip.name" . }}-cloud-provider
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         resources:
