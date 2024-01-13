@@ -1,10 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "sonarr.name" . }}-config
+  name: {{ include "sonarr.configName" . | quote }}
   namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "sonarr.labels" . | nindent 4 }}
 data:
   config.xml: |
     {{- include "sonarr.configData" . | nindent 4 }}
+  config.yml: |
+    {{- include "sonarr.flemmarrData" . | nindent 4 }}

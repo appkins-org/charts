@@ -28,17 +28,23 @@ spec:
       automountServiceAccountToken: true
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
+      {{- if .Values.qbittorrent.customWebUi.enabled }}
+      {{- with .Values.qbittorrent.customWebUi }}
       initContainers:
-        - name: vuetorrent
-          image: busybox:latest
-          command:
-            - sh
-            - -c
+        - name: {{ default "download-custom-webui" .name }}
+          image: {{ default "busybox:latest" .image }}
+          command: {{ default "[\"sh\", \"-c\"]" .command }}
           args:
+          {{- if .args }}
+            {{ toYaml .args | nindent 12 }}
+          {{- else }}
             - wget -qO- https://github.com/WDaan/VueTorrent/releases/download/v1.6.1/vuetorrent.zip | unzip - -d /data
+          {{- end }}
           volumeMounts:
-          - mountPath: /data
-            name: data
+            - mountPath: /data
+              name: data
+      {{- end }}
+      {{- end }}
       containers:
         - name: qbittorrent
           image: "ghcr.io/k8s-at-home/qbittorrent:v4.4.2"
@@ -93,53 +99,30 @@ spec:
           ports:
           - containerPort: 9022
             name: metrics
-        - name: gluetun
-          image: qmcgaw/gluetun:latest
+        {{- if .Values.qbittorrent.vpn.enabled }}
+        {{- with .Values.qbittorrent.vpn }}
+        - name: {{ default "vpn" .name }}
+          image: {{ default "qmcgaw/gluetun:latest" .image }}
           env:
-            - name: FIREWALL_INPUT_PORTS
-              value: 8080,8000,9022
-            - name: FIREWALL_OUTBOUND_SUBNETS
-              value: 10.0.0.0/8
-            - name: FIREWALL_VPN_INPUT_PORTS
-              value: "6881"
-            - name: HTTP_CONTROL_SERVER_ADDRESS
-              value: :8000
-            - name: HTTP_CONTROL_SERVER_LOG
-              value: "true"
-            - name: OPENVPN_PASSWORD
-              value: G5esWeu2szA2gJoAq8CKKw4M
-            - name: OPENVPN_USER
-              value: SNK7HpFbbhzET4zWpnwDFi6j
-            - name: SERVER_COUNTRIES
-              value: United States
-            - name: SERVER_REGIONS
-              value: America
             - name: TZ
               value: UTC
-            - name: VPN_SERVICE_PROVIDER
-              value: nordvpn
-            - name: VPN_TYPE
-              value: openvpn
-            - name: WIREGUARD_PRIVATE_KEY
-              value: IIlDcfjM576ezkMzZI8i84w5Z0pL8hGNO1jU6bA8HnM=
+            {{- with .env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .livenessProbe }}
           livenessProbe:
-            failureThreshold: 1
-            httpGet:
-              path: /v1/openvpn/status
-              port: control-port
-            initialDelaySeconds: 30
-            periodSeconds: 60
-            successThreshold: 1
-            terminationGracePeriodSeconds: 60
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
-            - containerPort: 8000
+            - containerPort: {{ default 8000 .port }}
               name: control-port
               protocol: TCP
+          {{- with .securityContext }}
           securityContext:
-            capabilities:
-              add:
-                - NET_ADMIN
-                - SYS_MODULE
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- end }}
+        {{- end }}
       volumes:
         - name: config
           configMap:

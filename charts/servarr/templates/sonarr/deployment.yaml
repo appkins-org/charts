@@ -62,6 +62,13 @@ spec:
           - name: http
             containerPort: {{ default 8989 .Values.sonarr.service.port }}
             protocol: TCP
+        volumeMounts:
+          - name: config
+            mountPath: /config
+          - name: tmp
+            mountPath: /tmp
+          - name: data
+            mountPath: /data
         env:
           - name: TZ
             value: {{ .Values.common.timezone | default "UTC" | quote }}
@@ -100,6 +107,27 @@ spec:
           failureThreshold: 30
           timeoutSeconds: 1
           periodSeconds: 5
+        lifecycle:
+          postStart:
+            exec:
+              command:
+                - /usr/bin/env
+                - bash
+                - -c
+                - until curl --fail localhost:{{ include "sonarr.port" . }}/api/v3/system/status?apiKey=`IFS=\\> && while read -d \\< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml; do sleep 2; done`
+      - name: config
+        image: pierremesure/flemmarr:latest
+        command:
+          - /bin/sh
+          - -c
+          - cp -r /config/* /data/ && chown -R 1000:1000 /data
+        volumeMounts:
+          - name: config
+            mountPath: /config
+          - name: tmp
+            mountPath: /tmp
+          - name: data
+            mountPath: /data
       {{- if or .Values.sonarr.metrics.enabled .Values.sonarr.metrics.exporter.enabled }}
       - name: exporter
         image: {{ printf "%s:%s" .Values.sonarr.metrics.exporter.image.repository .Values.sonarr.metrics.exporter.image.tag | quote }}
@@ -112,13 +140,11 @@ spec:
             value: {{ default 9543 .Values.sonarr.metrics.exporter.port | quote }}
         volumeMounts:
           - name: config
-            mountPath: /etc/loki/config
-          - name: runtime-config
-            mountPath: /etc/loki/runtime-config
+            mountPath: /config
           - name: tmp
             mountPath: /tmp
           - name: data
-            mountPath: /var/loki
+            mountPath: /data
       {{- end }}
       {{- with .Values.sonarr.affinity }}
       affinity:
@@ -142,11 +168,7 @@ spec:
         - name: data
           emptyDir: {}
         - name: config
-          configMap:
-          name: {{ template "sonarr.name" . }}-config
-          items:
-            - key: "config.xml"
-              path: "config.xml"
+          {{- include "sonarr.configVolume" . | nindent 10 }}
         {{- with .Values.sonarr.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

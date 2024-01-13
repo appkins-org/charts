@@ -134,6 +134,56 @@ sonarr:
 
   terminationGracePeriodSeconds: 30
 
+  config:
+    host:
+      analyticsEnabled: false
+    ui:
+      firstDayOfWeek: 1 # 0 = Sunday, 1 = Monday
+      timeFormat: HH:mm # HH:mm = 17:30, h(:mm)a = 5:30PM
+    naming:
+      renameEpisodes: true
+      replaceIllegalCharacters: true
+      multiEpisodeStyle: 5
+      # https://trash-guides.info/Sonarr/Sonarr-recommended-naming-scheme/
+      standardEpisodeFormat: "{Series TitleYear} - S{season:00}E{episode:00} - {Episode CleanTitle} [{Preferred Words }{Quality Full}]{[MediaInfo VideoDynamicRangeType]}{[Mediainfo AudioCodec}{ Mediainfo AudioChannels]}{MediaInfo AudioLanguages}{[MediaInfo VideoCodec]}{-Release Group}"
+      dailyEpisodeFormat: "{Series TitleYear} - {Air-Date} - {Episode CleanTitle} [{Preferred Words }{Quality Full}]{[MediaInfo VideoDynamicRangeType]}{[Mediainfo AudioCodec}{Mediainfo AudioChannels]}{MediaInfo AudioLanguages}{[MediaInfo VideoCodec]}{-Release Group}"
+      animeEpisodeFormat: "{Series TitleYear} - S{season:00}E{episode:00} - {absolute:000} - {Episode CleanTitle} [{Preferred Words }{Quality Full}]{[MediaInfo VideoDynamicRangeType]}[{MediaInfo VideoBitDepth}bit]{[MediaInfo VideoCodec]}[{Mediainfo AudioCodec} { Mediainfo AudioChannels}]{MediaInfo AudioLanguages}{-Release Group}"
+      seriesFolderFormat: "{Series TitleYear} [imdb-{ImdbId}]"
+      seasonFolderFormat: "Season {season:00}"
+      specialsFolderFormat: Specials
+      includeSeriesTitle: false
+      includeEpisodeTitle: false
+      includeQuality: false
+      replaceSpaces: true
+      separator: " - "
+      numberStyle: "S{season:00}E{episode:00}"
+    mediamanagement:
+      autoUnmonitorPreviouslyDownloadedEpisodes: false
+      recycleBin: ""
+      recycleBinCleanupDays: 7
+      downloadPropersAndRepacks: doNotUpgrade
+      createEmptySeriesFolders: false
+      deleteEmptyFolders: false
+      fileDate: none
+      rescanAfterRefresh: always
+      setPermissionsLinux: false
+      chmodFolder: "755"
+      chownGroup: ""
+      episodeTitleRequired: always
+      skipFreeSpaceCheckWhenImporting: true
+      minimumFreeSpaceWhenImporting: 100
+      copyUsingHardlinks: true
+      importExtraFiles: true
+      extraFileExtensions: srt
+      enableMediaInfo: true
+
+  rootfolder:
+    - name: Series
+      path: /data/series
+      defaultTags: []
+      defaultQualityProfileId: 1
+      defaultMetadataProfileId: 1
+
   env:
     TZ: UTC
 
@@ -400,6 +450,64 @@ qbittorrent:
     repository: lscr.io/linuxserver/sonarr
     tag: latest
     pullPolicy: IfNotPresent
+
+  customWebUi:
+    enabled: true
+    name: custom-webui
+    image: busybox:latest
+    command:
+      - "/bin/sh"
+      - "-c"
+    args:
+      - wget -qO- https://github.com/WDaan/VueTorrent/releases/download/v1.6.1/vuetorrent.zip | unzip - -d /data
+
+  vpn:
+    enabled: false
+    name: vpn
+    image: qmcgaw/gluetun:latest
+    pullPolicy: IfNotPresent
+    port: 8000
+    securityContext:
+      capabilities:
+        add:
+          - NET_ADMIN
+          - SYS_MODULE
+    env:
+      - name: FIREWALL_INPUT_PORTS
+        value: 8080,8000,9022
+      - name: FIREWALL_OUTBOUND_SUBNETS
+        value: 10.0.0.0/8
+      - name: FIREWALL_VPN_INPUT_PORTS
+        value: "6881"
+      - name: HTTP_CONTROL_SERVER_ADDRESS
+        value: :8000
+      - name: HTTP_CONTROL_SERVER_LOG
+        value: "true"
+      - name: OPENVPN_PASSWORD
+        value: G5esWeu2szA2gJoAq8CKKw4M
+      - name: OPENVPN_USER
+        value: SNK7HpFbbhzET4zWpnwDFi6j
+      - name: SERVER_COUNTRIES
+        value: United States
+      - name: SERVER_REGIONS
+        value: America
+      - name: TZ
+        value: UTC
+      - name: VPN_SERVICE_PROVIDER
+        value: nordvpn
+      - name: VPN_TYPE
+        value: openvpn
+      - name: WIREGUARD_PRIVATE_KEY
+        value: IIlDcfjM576ezkMzZI8i84w5Z0pL8hGNO1jU6bA8HnM=
+    livenessProbe:
+      failureThreshold: 1
+      httpGet:
+        path: /v1/openvpn/status
+        port: control-port
+      initialDelaySeconds: 30
+      periodSeconds: 60
+      successThreshold: 1
+      terminationGracePeriodSeconds: 60
 
   env:
     TZ: UTC

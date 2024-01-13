@@ -2,6 +2,10 @@
 {{- default "sonarr" .Values.sonarr.name }}
 {{- end }}
 
+{{- define "sonarr.configName" }}
+{{- default (printf "%s-config" (include "sonarr.name" .)) .Values.sonarr.externalConfigSecretName }}
+{{- end }}
+
 {{/*
 Sonarr common labels
 */}}
@@ -27,48 +31,102 @@ app.kubernetes.io/component: sonarr
 {{- end }}
 
 {{- define "sonarr.configData" -}}
+{{- $name := (include "sonarr.name" .) -}}
+{{- with .Values.sonarr }}
 <Config>
   <BindAddress>*</BindAddress>
-  <Port>{{ .Values.sonarr.service.port }}</Port>
+  <Port>{{ .service.port }}</Port>
   <SslPort>9898</SslPort>
   <EnableSsl>False</EnableSsl>
   <LaunchBrowser>False</LaunchBrowser>
-  <ApiKey>{{ include "sonarr.apiKey" . }}</ApiKey>
+  <ApiKey>{{ include "sonarr.apiKey" $ }}</ApiKey>
   <AuthenticationMethod>None</AuthenticationMethod>
   <Branch>master</Branch>
   <LogLevel>info</LogLevel>
   <SslCertPath></SslCertPath>
   <SslCertPassword></SslCertPassword>
   <UrlBase></UrlBase>
-  <InstanceName>{{ include "sonarr.name" . }}</InstanceName>
+  <InstanceName>{{ $name }}</InstanceName>
   <UpdateMechanism>Docker</UpdateMechanism>
   <AnalyticsEnabled>False</AnalyticsEnabled>
-{{- if .Values.sonarr.postgresql.enabled }}
-{{ printf "<PostgresUser>%s</PostgresUser>" (default (include "sonarr.name" .) .Values.sonarr.postgresql.username) | indent 2 }}
-{{ printf "<PostgresPassword>%s</PostgresPassword>" (default (include "sonarr.name" .) .Values.sonarr.postgresql.password) | indent 2 }}
-{{ printf "<PostgresPort>%v</PostgresPort>" (default "5432" .Values.sonarr.postgresql.port) | indent 2 }}
-{{ printf "<PostgresHost>%s</PostgresHost>" (default (include "sonarr.name" .) .Values.sonarr.postgresql.host) | indent 2 }}
-{{ printf "<PostgresMainDb>%s</PostgresMainDb>" (default (printf "%s-main" (include "sonarr.name" .)) .Values.sonarr.postgresql.database) | indent 2 }}
-{{- if .Values.sonarr.postgresql.logdb }}
-{{ printf "<PostgresLogDb>%s</PostgresLogDb>" .Values.sonarr.postgresql.logdb | indent 2 }}
-{{- end }}
+{{- if .postgresql.enabled }}
+  {{- with .postgresql }}
+  <PostgresUser>{{ default $name .username }}</PostgresUser>
+  <PostgresPassword>{{ default $name .password }}</PostgresPassword>
+  <PostgresPort>{{ default "5432" .port }}</PostgresPort>
+  <PostgresHost>{{ default $name .host }}</PostgresHost>
+  <PostgresMainDb>{{ default (printf "%s-main" $name) .database }}</PostgresMainDb>
+  {{- if .logdb }}
+  <PostgresLogDb>{{ .logdb }}</PostgresLogDb>
+  {{- end }}
+  {{- end }}
 {{- end }}
 </Config>
+{{- end }}
+{{- end }}
+
+{{- define "sonarr.flemmarrData" -}}
+{{- with .Values.sonarr }}
+sonarr:
+  server:
+    address: localhost
+    port: {{ .service.port }}
+  {{- with .config }}
+  config:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .rootfolder }}
+  rootfolder:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  downloadclient:
+    - name: qBittorrent
+      enable: true
+      protocol: torrent
+      priority: 2
+      removeCompletedDownloads: true
+      removeFailedDownloads: true
+      fields:
+      - name: host
+        value: qbittorrent.{{ $.Release.Namespace }}.svc.cluster.local
+      - name: port
+        value: 8080
+      - name: username
+        value: username
+      - name: password
+        value: password
+      - name: tvCategory
+        value: tv
+      - name: recentTvPriority
+        value: 0
+      - name: olderTvPriority
+        value: 0
+      - name: initialState
+        value: 0
+      - name: sequentialOrder
+        value: false
+      - name: firstAndLast
+        value: false
+      implementation: QBittorrent
+      configContract: QBittorrentSettings
+{{- end }}
 {{- end }}
 
 {{/*
 The volume to mount for loki configuration
 */}}
-{{- define "sonarr.configVolume" }}
-{{- if eq .Values.sonarr.configStorageType "Secret" }}
+{{- define "sonarr.configVolume" -}}
+{{- if eq .Values.sonarr.configStorageType "Secret" -}}
 secret:
-  secretName: {{ tpl .Values.sonarr.externalConfigSecretName . }}
-{{- else if eq .Values.sonarr.configStorageType "ConfigMap" }}
+  secretName: {{ include "sonarr.configName" . }}
+{{- else if eq .Values.sonarr.configStorageType "ConfigMap" -}}
 configMap:
-  name: {{ tpl .Values.sonarr.externalConfigSecretName . }}
+  name: {{ include "sonarr.configName" . }}
   items:
     - key: "config.xml"
       path: "config.xml"
+    - key: "config.yml"
+      path: "config.yml"
 {{- end }}
 {{- end }}
 
