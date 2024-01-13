@@ -16,6 +16,6 @@ data:
 {{- else }}
 data:
   config.xml: |
-    {{ include "flamarr.configData" . | nindent 4 }}
+    {{- include "flamarr.configData" . | nindent 4 }}
 {{- end -}}
 {{- end }}

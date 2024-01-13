@@ -7,4 +7,4 @@ metadata:
     {{- include "sonarr.labels" . | nindent 4 }}
 data:
   config.xml: |
-    {{ include "sonarr.configData" . | nindent 4 }}
+    {{- include "sonarr.configData" . | nindent 4 }}

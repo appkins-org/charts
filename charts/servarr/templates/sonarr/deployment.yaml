@@ -46,75 +46,76 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- include "sonarr.priorityClassName" . | nindent 6 }}
+      priorityClassName: {{ include "sonarr.priorityClassName" . | quote }}
+      {{- with .Values.common.podSecurityContext }}
       securityContext:
-        {{- toYaml .Values.common.podSecurityContext | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       terminationGracePeriodSeconds: {{ .Values.sonarr.terminationGracePeriodSeconds }}
       containers:
-        - name: sonarr
-          image: "{{ .Values.sonarr.image.repository }}:{{ .Values.sonarr.image.tag }}"
-          imagePullPolicy: {{ .Values.sonarr.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: {{ default 8989 .Values.sonarr.service.port }}
-              protocol: TCP
-            - name: http-metrics
-              containerPort: 3100
-              protocol: TCP
-          env:
-            - name: TZ
-              value: "{{ .Values.common.timezone | default "UTC" }}"
-            {{- with .Values.sonarr.extraEnv }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
-          {{- with .Values.sonarr.extraEnvFrom }}
-          envFrom:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          securityContext:
-            {{- toYaml .Values.common.containerSecurityContext | nindent 12 }}
-          livenessProbe:
-            exec:
-              command:
-              - /usr/bin/env
-              - bash
-              - -c
-              - "curl --fail localhost:{{ include "sonarr.port" . }}/api/v3/system/status?apiKey=`IFS=\\> && while
-                read -d \\< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`"
-            failureThreshold: 5
-            initialDelaySeconds: 60
-            periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 10
-          readinessProbe:
-            tcpSocket:
-              port: {{ include "sonarr.port" . }}
-            initialDelaySeconds: 0
-            failureThreshold: 3
-            timeoutSeconds: 1
-            periodSeconds: 10
-          startupProbe:
-            tcpSocket:
-              port: {{ include "sonarr.port" . }}
-            initialDelaySeconds: 0
-            failureThreshold: 30
-            timeoutSeconds: 1
-            periodSeconds: 5
+      - name: sonarr
+        image: {{ printf "%s:%s" .Values.sonarr.image.repository .Values.sonarr.image.tag | quote }}
+        imagePullPolicy: {{ .Values.sonarr.image.pullPolicy | quote }}
+        ports:
+          - name: http
+            containerPort: {{ default 8989 .Values.sonarr.service.port }}
+            protocol: TCP
+          - name: http-metrics
+            containerPort: 3100
+            protocol: TCP
+        env:
+          - name: TZ
+            value: {{ .Values.common.timezone | default "UTC" | quote }}
+         {{- with .Values.sonarr.extraEnv }}
+         {{- toYaml . | nindent 10 }}
+         {{- end }}
+        {{- with .Values.sonarr.extraEnvFrom }}
+        envFrom:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        securityContext:
+          {{- toYaml .Values.common.containerSecurityContext | nindent 10 }}
+        livenessProbe:
+          exec:
+            command:
+            - /usr/bin/env
+            - bash
+            - -c
+            - curl --fail localhost:{{ include "sonarr.port" . }}/api/v3/system/status?apiKey=`IFS=\\> && while read -d \\< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`
+          failureThreshold: 5
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: {{ include "sonarr.port" . }}
+          initialDelaySeconds: 0
+          failureThreshold: 3
+          timeoutSeconds: 1
+          periodSeconds: 10
+        startupProbe:
+          tcpSocket:
+            port: {{ include "sonarr.port" . }}
+          initialDelaySeconds: 0
+          failureThreshold: 30
+          timeoutSeconds: 1
+          periodSeconds: 5
 
-        - name: exporter
-          image: ghcr.io/onedr0p/exportarr:latest
-          env:
-            - name: PORT
-              value: "9707"
-          volumeMounts:
-            - name: config
-              mountPath: /etc/loki/config
-            - name: runtime-config
-              mountPath: /etc/loki/runtime-config
-            - name: tmp
-              mountPath: /tmp
-            - name: data
-              mountPath: /var/loki
+      - name: exporter
+        image: ghcr.io/onedr0p/exportarr:latest
+        env:
+          - name: PORT
+            value: "9707"
+        volumeMounts:
+          - name: config
+            mountPath: /etc/loki/config
+          - name: runtime-config
+            mountPath: /etc/loki/runtime-config
+          - name: tmp
+            mountPath: /tmp
+          - name: data
+            mountPath: /var/loki
       {{- with .Values.sonarr.affinity }}
       affinity:
         {{- tpl . $ | nindent 8 }}
