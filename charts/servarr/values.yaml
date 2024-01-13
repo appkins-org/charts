@@ -2,9 +2,8 @@ global:
   image:
     registry: null
   timezone: UTC
-
+  # -- PriorityClass for all pods
   priorityClassName: null
-
   # -- Common annotations for all deployments/StatefulSets
   annotations: {}
   # -- Common annotations for all pods
@@ -19,17 +18,22 @@ global:
   revisionHistoryLimit: 10
   # -- The SecurityContext for Loki pods
   podSecurityContext:
-    fsGroup: 10001
-    runAsGroup: 10001
-    runAsNonRoot: true
-    runAsUser: 10001
+    fsGroup: 0
+    runAsGroup: 0
+    runAsNonRoot: false
+    runAsUser: 0
   # -- The SecurityContext for Loki containers
   containerSecurityContext:
-    readOnlyRootFilesystem: true
+    readOnlyRootFilesystem: false
     capabilities:
-      drop:
-        - ALL
-    allowPrivilegeEscalation: false
+      add:
+        - CAP_SYS_ADMIN
+      # drop:
+      #   - ALL
+    allowPrivilegeEscalation: true
+
+  persistence:
+    storageClass: null
 
 nameOverride: ""
 fullnameOverride: ""
@@ -43,6 +47,8 @@ serviceAccount:
   create: true
   # Annotations to add to the service account
   annotations: {}
+  # Whether to automount the service account token
+  automountServiceAccountToken: true
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ""
@@ -128,6 +134,7 @@ sonarr:
   terminationGracePeriodSeconds: 30
 
   config:
+    enabled: true
     host:
       analyticsEnabled: false
     ui:
@@ -478,38 +485,19 @@ qbittorrent:
         customHTTPHeadersEnabled: false
         authSubnetWhitelistEnabled: true
         authSubnetWhitelist:
-
-    # [Meta]
-    # MigrationVersion=4
-
-    # [Network]
-    # PortForwardingEnabled=false
-
-    # [Preferences]
-    # Connection\PortRangeMin=6881
-    # Connection\UPnP=false
-    # Downloads\SavePath=/downloads/
-    # Downloads\TempPath=/downloads/
-    # WebUI\Address=*
-    # WebUI\Port={{ include "qbittorrent.port" . }}
-    # WebUI\ServerDomains=*
-    # WebUI\AlternativeUIEnabled=true
-    # WebUI\RootFolder=/data/vuetorrent
-    # WebUI\HostHeaderValidation=false
-    # WebUI\CSRFProtection=false
-    # WebUI\CustomHTTPHeadersEnabled=false
-    # WebUI\AuthSubnetWhitelistEnabled=true
-    # WebUI\AuthSubnetWhitelist=10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 0.0.0.0/0
-
   customWebUi:
     enabled: true
     name: custom-webui
-    image: busybox:latest
-    command:
-      - "/bin/sh"
-      - "-c"
-    args:
-      - wget -qO- https://github.com/WDaan/VueTorrent/releases/download/v1.6.1/vuetorrent.zip | unzip - -d /data
+    image:
+      repository: busybox
+      tag: latest
+      pullPolicy: IfNotPresent
+    archiveUrl: https://github.com/WDaan/VueTorrent/releases/download/v1.6.1/vuetorrent.zip
+    # command:
+    #   - "/bin/sh"
+    #   - "-c"
+    # args:
+    #   - wget -qO- https://github.com/WDaan/VueTorrent/releases/download/v1.6.1/vuetorrent.zip | unzip - -d /data
 
   vpn:
     enabled: false

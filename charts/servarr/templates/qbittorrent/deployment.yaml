@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "sonarr.name" . }}
+  name: {{ include "qbittorrent.name" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "qbittorrent.labels" . | nindent 4 }}
@@ -28,18 +28,31 @@ spec:
       automountServiceAccountToken: true
       dnsPolicy: ClusterFirst
       enableServiceLinks: true
+      securityContext:
+        fsGroup: 0
+        runAsGroup: 0
+        runAsUser: 0
       {{- if .Values.qbittorrent.customWebUi.enabled }}
       {{- with .Values.qbittorrent.customWebUi }}
       initContainers:
         - name: {{ default "download-custom-webui" .name }}
-          image: {{ default "busybox:latest" .image }}
-          command: {{ default "[\"sh\", \"-c\"]" .command }}
+          image: {{ printf "%s:%v" (default "busybox" .image.repository ) (default "latest" .image.tag) }}
+          command:
+          {{- if .command }}
+            {{ toYaml .command | nindent 12 }}
+          {{- else }}
+            - "/bin/sh"
+            - "-c"
+          {{- end }}
           args:
           {{- if .args }}
             {{ toYaml .args | nindent 12 }}
           {{- else }}
-            - wget -qO- https://github.com/WDaan/VueTorrent/releases/download/v1.6.1/vuetorrent.zip | unzip - -d /data
+            - wget -qO- $(ARCHIVE_URL) | unzip - -d /data
           {{- end }}
+          env:
+            - name: ARCHIVE_URL
+              value: {{ .archiveUrl | quote }}
           volumeMounts:
             - mountPath: /data
               name: data
@@ -49,10 +62,6 @@ spec:
         - name: qbittorrent
           image: "ghcr.io/k8s-at-home/qbittorrent:v4.4.2"
           imagePullPolicy: IfNotPresent
-          securityContext:
-            fsGroup: 0
-            runAsGroup: 0
-            runAsUser: 0
           env:
             - name: PGID
               value: "0"
@@ -132,10 +141,10 @@ spec:
                 path: "qBittorrent.conf"
         - name: data
           persistentVolumeClaim:
-            claimName: qbittorrent-data
+            claimName: {{ include "qbittorrent.name" . }}-data
         - name: downloads
           persistentVolumeClaim:
-            claimName: qbittorrent-downloads
+            claimName: {{ include "servarr.name" . }}-downloads
         - name: media
           persistentVolumeClaim:
-            claimName: qbittorrent-media
+            claimName: {{ include "servarr.name" . }}-media

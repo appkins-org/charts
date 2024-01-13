@@ -6,6 +6,16 @@
 {{- default (printf "%s-config" (include "sonarr.name" .)) .Values.sonarr.externalConfigSecretName }}
 {{- end }}
 
+{{- define "sonarr.replicas" -}}
+{{- if not .Values.sonarr.autoscaling.enabled -}}
+{{- if .Values.sonarr.postgresql.enabled -}}
+replicas: {{- default 1 .Values.sonarr.replicas }}
+{{- else -}}
+replicas: 1
+{{- end }}
+{{- end -}}
+{{- end -}}
+
 {{/*
 Sonarr common labels
 */}}
@@ -41,15 +51,16 @@ app.kubernetes.io/component: sonarr
   <LaunchBrowser>False</LaunchBrowser>
   <ApiKey>{{ include "sonarr.apiKey" $ }}</ApiKey>
   <AuthenticationMethod>None</AuthenticationMethod>
-  <Branch>master</Branch>
+  <Branch>main</Branch>
   <LogLevel>info</LogLevel>
   <SslCertPath></SslCertPath>
   <SslCertPassword></SslCertPassword>
   <UrlBase></UrlBase>
   <InstanceName>{{ $name }}</InstanceName>
-  <UpdateMechanism>Docker</UpdateMechanism>
+  <UpdateMechanism>External</UpdateMechanism>
+  <UpdateAutomatically>False</UpdateAutomatically>
   <AnalyticsEnabled>False</AnalyticsEnabled>
-{{- if .postgresql.enabled }}
+{{- if (default false .postgresql.enabled) }}
   {{- with .postgresql }}
   <PostgresUser>{{ default $name .username }}</PostgresUser>
   <PostgresPassword>{{ default $name .password }}</PostgresPassword>
@@ -69,9 +80,9 @@ app.kubernetes.io/component: sonarr
 {{- with .Values.sonarr }}
 sonarr:
   server:
-    address: localhost
+    address: http://localhost
     port: {{ .service.port }}
-  {{- with .config }}
+  {{- with omit .config "enabled" }}
   config:
     {{- toYaml . | nindent 4 }}
   {{- end }}

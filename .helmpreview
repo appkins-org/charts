@@ -1,0 +1,1 @@
+helm template -n media servarr ./charts/servarr --debug -f ./.tmp/values.yaml

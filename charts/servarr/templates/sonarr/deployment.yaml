@@ -8,9 +8,7 @@ metadata:
   labels:
     {{- include "sonarr.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.sonarr.autoscaling.enabled }}
-  replicas: {{ .Values.sonarr.replicas }}
-  {{- end }}
+  {{- include "sonarr.replicas" . | nindent 2 }}
   strategy:
     rollingUpdate:
       maxSurge: 0
@@ -54,10 +52,31 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.sonarr.terminationGracePeriodSeconds }}
+      initContainers:
+        - name: sonarr-init-config
+          image: mikefarah/yq
+          imagePullPolicy: {{ .Values.sonarr.image.pullPolicy | quote }}
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - echo "Copying config file to workspace" && cp /ro/config.xml /config/config.xml && echo "Files copied"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: data
+              mountPath: /data
+            - name: config-init
+              mountPath: /ro
       containers:
       - name: sonarr
         image: {{ printf "%s:%s" .Values.sonarr.image.repository .Values.sonarr.image.tag }}
         imagePullPolicy: {{ .Values.sonarr.image.pullPolicy | quote }}
+        # command:
+        #   - /bin/sh
+        #   - -c # chown -R 1000:1000 /config && /init
+        # args:
+        #   - echo "Copying config file to workspace" && cp /config/ro/config.xml /config/config.xml && /init
         ports:
           - name: http
             containerPort: {{ default 8989 .Values.sonarr.service.port }}
@@ -69,6 +88,7 @@ spec:
             mountPath: /tmp
           - name: data
             mountPath: /data
+            readOnly: false
         env:
           - name: TZ
             value: {{ .Values.global.timezone | default "UTC" | quote }}
@@ -107,27 +127,29 @@ spec:
           failureThreshold: 30
           timeoutSeconds: 1
           periodSeconds: 5
-        lifecycle:
-          postStart:
-            exec:
-              command:
-                - /usr/bin/env
-                - bash
-                - -c
-                - until curl --fail localhost:{{ include "sonarr.port" . }}/api/v3/system/status?apiKey=`IFS=\\> && while read -d \\< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml; do sleep 2; done`
+        # lifecycle:
+        #   postStart:
+        #     exec:
+        #       command:
+        #         - /usr/bin/env
+        #         - bash
+        #         - -c
+        #         - until curl --fail localhost:{{ include "sonarr.port" . }}/api/v3/system/status?apiKey=`IFS=\\> && while read -d \\< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml; do sleep 2; done`
+      {{- if or .Values.sonarr.config.enabled }}
       - name: config
-        image: pierremesure/flemmarr:latest
-        command:
-          - /bin/sh
-          - -c
-          - cp -r /config/* /data/ && chown -R 1000:1000 /data
+        image: ghcr.io/appkins/flemmarr:latest
+        # command:
+        #   - /bin/sh
+        #   - -c
+        #   - cp -r /config/* /data/ && chown -R 1000:1000 /data
         volumeMounts:
-          - name: config
+          - name: config-init
             mountPath: /config
           - name: tmp
             mountPath: /tmp
           - name: data
             mountPath: /data
+      {{- end }}
       {{- if or .Values.sonarr.metrics.enabled .Values.sonarr.metrics.exporter.enabled }}
       - name: exporter
         image: {{ printf "%s:%s" .Values.sonarr.metrics.exporter.image.repository .Values.sonarr.metrics.exporter.image.tag | quote }}
@@ -168,6 +190,8 @@ spec:
         - name: data
           emptyDir: {}
         - name: config
+          emptyDir: {}
+        - name: config-init
           {{- include "sonarr.configVolume" . | nindent 10 }}
         {{- with .Values.sonarr.extraVolumes }}
         {{- toYaml . | nindent 8 }}
