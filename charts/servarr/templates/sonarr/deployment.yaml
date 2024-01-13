@@ -15,7 +15,7 @@ spec:
     rollingUpdate:
       maxSurge: 0
       maxUnavailable: 1
-  revisionHistoryLimit: {{ .Values.common.revisionHistoryLimit }}
+  revisionHistoryLimit: {{ .Values.global.revisionHistoryLimit }}
   selector:
     matchLabels:
       {{- include "sonarr.selectorLabels" . | nindent 6 }}
@@ -23,7 +23,7 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print .Template.BasePath "/sonarr/config.yaml") . | sha256sum }}
-        {{- with .Values.common.podAnnotations }}
+        {{- with .Values.global.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
         {{- with .Values.sonarr.podAnnotations }}
@@ -31,7 +31,7 @@ spec:
         {{- end }}
       labels:
         {{- include "sonarr.selectorLabels" . | nindent 8 }}
-        {{- with .Values.common.podLabels }}
+        {{- with .Values.global.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
         {{- with .Values.sonarr.podLabels }}
@@ -46,10 +46,10 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if or .Values.common.priorityClassName .Values.sonarr.priorityClassName }}
-      priorityClassName: {{ coalesce .Values.common.priorityClassName .Values.sonarr.priorityClassName | quote }}
+      {{- if or .Values.global.priorityClassName .Values.sonarr.priorityClassName }}
+      priorityClassName: {{ coalesce .Values.global.priorityClassName .Values.sonarr.priorityClassName | quote }}
       {{- end }}
-      {{- with .Values.common.podSecurityContext }}
+      {{- with .Values.global.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -71,7 +71,7 @@ spec:
             mountPath: /data
         env:
           - name: TZ
-            value: {{ .Values.common.timezone | default "UTC" | quote }}
+            value: {{ .Values.global.timezone | default "UTC" | quote }}
          {{- with .Values.sonarr.extraEnv }}
          {{- toYaml . | nindent 10 }}
          {{- end }}
@@ -80,7 +80,7 @@ spec:
           {{- toYaml . | nindent 10 }}
         {{- end }}
         securityContext:
-          {{- toYaml .Values.common.containerSecurityContext | nindent 10 }}
+          {{- toYaml .Values.global.containerSecurityContext | nindent 10 }}
         livenessProbe:
           exec:
             command:

@@ -1,44 +1,6 @@
-# Default values for servarr.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
-replicaCount: 1
-
-image:
-  repository: nginx
-  pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
-
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
-
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
-
-podAnnotations: {}
-
-podSecurityContext:
-  {}
-  # fsGroup: 2000
-
-securityContext:
-  {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
-
-common:
+global:
+  image:
+    registry: null
   timezone: UTC
 
   priorityClassName: null
@@ -68,6 +30,37 @@ common:
       drop:
         - ALL
     allowPrivilegeEscalation: false
+
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 1
+
+imagePullSecrets: []
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  {}
+  # fsGroup: 2000
+
+securityContext:
+  {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
 
 service:
   type: ClusterIP
@@ -314,9 +307,7 @@ prowlarr:
   autoscaling:
     enabled: false
 
-###
-# Radarr specific values
-###
+# Configuration for the radarr pod(s)
 radarr:
   enabled: true
   image:
@@ -411,7 +402,7 @@ radarr:
         additionalMetrics: false
         # -- Set to true to enable gathering unknown queue items
         unknownQueueItems: false
-
+# Configuration for the lidarr pod(s)
 lidarr:
   name: lidarr
   enabled: true
@@ -426,7 +417,7 @@ lidarr:
 
   autoscaling:
     enabled: false
-
+# Configuration for the readarr pod(s)
 readarr:
   name: readarr
   enabled: true
@@ -443,13 +434,72 @@ readarr:
     enabled: false
 
   annotations: {}
-
+# Configuration for the qbittorrent pod(s)
 qbittorrent:
   name: qbittorrent
   image:
     repository: lscr.io/linuxserver/sonarr
     tag: latest
     pullPolicy: IfNotPresent
+
+  config:
+    autoRun:
+      enabled: false
+      program: ""
+    locking:
+      locked: false
+    bitTorrent:
+      session:
+        defaultSavePath: /downloads/
+        port: 6881
+        queueingSystemEnabled: true
+        tempPath: /downloads/
+    legalNotice:
+      accepted: true
+    meta:
+      migrationVersion: 4
+    network:
+      portForwardingEnabled: false
+    preferences:
+      connection:
+        portRangeMin: 6881
+        uPnP: false
+      downloads:
+        savePath: /downloads/
+        tempPath: /downloads/
+      webUI:
+        address: "*"
+        port: 8080
+        serverDomains: "*"
+        alternativeUIEnabled: true
+        rootFolder: /data/vuetorrent
+        hostHeaderValidation: false
+        cSRFProtection: false
+        customHTTPHeadersEnabled: false
+        authSubnetWhitelistEnabled: true
+        authSubnetWhitelist:
+
+    # [Meta]
+    # MigrationVersion=4
+
+    # [Network]
+    # PortForwardingEnabled=false
+
+    # [Preferences]
+    # Connection\PortRangeMin=6881
+    # Connection\UPnP=false
+    # Downloads\SavePath=/downloads/
+    # Downloads\TempPath=/downloads/
+    # WebUI\Address=*
+    # WebUI\Port={{ include "qbittorrent.port" . }}
+    # WebUI\ServerDomains=*
+    # WebUI\AlternativeUIEnabled=true
+    # WebUI\RootFolder=/data/vuetorrent
+    # WebUI\HostHeaderValidation=false
+    # WebUI\CSRFProtection=false
+    # WebUI\CustomHTTPHeadersEnabled=false
+    # WebUI\AuthSubnetWhitelistEnabled=true
+    # WebUI\AuthSubnetWhitelist=10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 0.0.0.0/0
 
   customWebUi:
     enabled: true
@@ -472,33 +522,33 @@ qbittorrent:
         add:
           - NET_ADMIN
           - SYS_MODULE
-    env:
-      - name: FIREWALL_INPUT_PORTS
-        value: 8080,8000,9022
-      - name: FIREWALL_OUTBOUND_SUBNETS
-        value: 10.0.0.0/8
-      - name: FIREWALL_VPN_INPUT_PORTS
-        value: "6881"
-      - name: HTTP_CONTROL_SERVER_ADDRESS
-        value: :8000
-      - name: HTTP_CONTROL_SERVER_LOG
-        value: "true"
-      - name: OPENVPN_PASSWORD
-        value: G5esWeu2szA2gJoAq8CKKw4M
-      - name: OPENVPN_USER
-        value: SNK7HpFbbhzET4zWpnwDFi6j
-      - name: SERVER_COUNTRIES
-        value: United States
-      - name: SERVER_REGIONS
-        value: America
-      - name: TZ
-        value: UTC
-      - name: VPN_SERVICE_PROVIDER
-        value: nordvpn
-      - name: VPN_TYPE
-        value: openvpn
-      - name: WIREGUARD_PRIVATE_KEY
-        value: IIlDcfjM576ezkMzZI8i84w5Z0pL8hGNO1jU6bA8HnM=
+    env: []
+    #  - name: FIREWALL_INPUT_PORTS
+    #    value: 8080,8000,9022
+    #  - name: FIREWALL_OUTBOUND_SUBNETS
+    #    value: 10.0.0.0/8
+    #  - name: FIREWALL_VPN_INPUT_PORTS
+    #    value: "6881"
+    #  - name: HTTP_CONTROL_SERVER_ADDRESS
+    #    value: :8000
+    #  - name: HTTP_CONTROL_SERVER_LOG
+    #    value: "true"
+    #  - name: OPENVPN_PASSWORD
+    #    value: password
+    #  - name: OPENVPN_USER
+    #    value: openvpn
+    #  - name: SERVER_COUNTRIES
+    #    value: United States
+    #  - name: SERVER_REGIONS
+    #    value: America
+    #  - name: TZ
+    #    value: UTC
+    #  - name: VPN_SERVICE_PROVIDER
+    #    value: nordvpn
+    #  - name: VPN_TYPE
+    #    value: openvpn
+    #  - name: WIREGUARD_PRIVATE_KEY
+    #    value: af6b72b3-84ac-4d88-8d80-f9f604f66538
     livenessProbe:
       failureThreshold: 1
       httpGet:

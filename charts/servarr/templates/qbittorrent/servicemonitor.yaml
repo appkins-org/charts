@@ -1,20 +1,15 @@
 ---
-# Source: qbittorrent/templates/servicemonitor.yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: qbittorrent
+  name: {{ include "sonarr.name" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
-    helm.sh/chart: qbittorrent-13.5.2
-    app.kubernetes.io/name: qbittorrent
-    app.kubernetes.io/instance: qbittorrent
-    app.kubernetes.io/version: "v4.4.2"
-    app.kubernetes.io/managed-by: Helm
+    {{- include "qbittorrent.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: qbittorrent
-      app.kubernetes.io/instance: qbittorrent
+      {{- include "qbittorrent.selectorLabels" . | nindent 6 }}
   endpoints:
     - port: metrics
       interval: 15s

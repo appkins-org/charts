@@ -22,7 +22,7 @@ app.kubernetes.io/component: prowlarr
 prowlarr priority class name
 */}}
 {{- define "prowlarr.priorityClassName" -}}
-{{- $pcn := coalesce .Values.common.priorityClassName .Values.prowlarr.priorityClassName -}}
+{{- $pcn := coalesce .Values.global.priorityClassName .Values.prowlarr.priorityClassName -}}
 {{- if $pcn }}
 priorityClassName: {{ $pcn }}
 {{- end }}

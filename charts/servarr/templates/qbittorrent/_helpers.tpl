@@ -26,45 +26,31 @@ app.kubernetes.io/component: qbittorrent
 {{- default (uuidv4 | replace "-" "") .Values.qbittorrent.apiKey }}
 {{- end }}
 
-{{- define "qbittorrent.configData" -}}
-[AutoRun]
-enabled=false
-program=
-
-[Locking]
-locked=false
-
-[BitTorrent]
-Session\DefaultSavePath=/downloads/
-Session\Port=6881
-Session\QueueingSystemEnabled=true
-Session\TempPath=/downloads/
-
-[LegalNotice]
-Accepted=true
-
-[Meta]
-MigrationVersion=4
-
-[Network]
-PortForwardingEnabled=false
-
-[Preferences]
-Connection\PortRangeMin=6881
-Connection\UPnP=false
-Downloads\SavePath=/downloads/
-Downloads\TempPath=/downloads/
-WebUI\Address=*
-WebUI\Port={{ include "qbittorrent.port" . }}
-WebUI\ServerDomains=*
-WebUI\AlternativeUIEnabled=true
-WebUI\RootFolder=/data/vuetorrent
-WebUI\HostHeaderValidation=false
-WebUI\CSRFProtection=false
-WebUI\CustomHTTPHeadersEnabled=false
-WebUI\AuthSubnetWhitelistEnabled=true
-WebUI\AuthSubnetWhitelist=10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 0.0.0.0/0
+{{- define "qbittorrent.recurseFlattenMap" -}}
+{{- $map := first . -}}
+{{- $label := last . -}}
+{{- range $key, $val := $map -}}
+{{- $sublabel := $key | title -}}
+{{- if $label -}}
+{{- $sublabel = list $label $key | join "\\" | title -}}
+{{- end -}}
+{{- if kindOf $val | eq "map" -}}
+    {{- list $val $sublabel | include "qbittorrent.recurseFlattenMap" -}}
+{{- else }}
+{{ printf "%s=%v" $sublabel $val | indent 2 }}
 {{- end }}
+{{- end -}}
+{{- end -}}
+
+
+{{- define "qbittorrent.configData" -}}
+{{- range $k, $v := .Values.qbittorrent.config }}
+{{ printf "[%s]" (title $k) }}
+{{- if and $v (kindIs "map" $v) -}}
+    {{- list $v nil | include "qbittorrent.recurseFlattenMap" -}}
+{{- end }}
+{{- end -}}
+{{- end -}}
 
 {{/*
 The volume to mount for loki configuration
