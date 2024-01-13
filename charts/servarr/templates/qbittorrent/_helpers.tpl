@@ -18,16 +18,6 @@ qbittorrent selector labels
 app.kubernetes.io/component: qbittorrent
 {{- end }}
 
-{{/*
-qbittorrent priority class name
-*/}}
-{{- define "qbittorrent.priorityClassName" -}}
-{{- $pcn := coalesce .Values.common.priorityClassName .Values.qbittorrent.priorityClassName -}}
-{{- if $pcn }}
-priorityClassName: {{ $pcn }}
-{{- end }}
-{{- end }}
-
 {{- define "qbittorrent.port" }}
 {{- default 8000 .Values.qbittorrent.service.port }}
 {{- end }}

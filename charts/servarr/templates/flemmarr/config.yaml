@@ -1,0 +1,21 @@
+{{- if not .Values.flemmarr.existingSecretForConfig -}}
+apiVersion: v1
+{{- if eq .Values.flemmarr.configStorageType "Secret" }}
+kind: Secret
+{{- else }}
+kind: ConfigMap
+{{- end }}
+metadata:
+  name: {{ template "flemmarr.name" . }}-config
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "flemmarr.labels" . | nindent 4 }}
+{{- if eq .Values.flemmarr.configStorageType "Secret" }}
+data:
+  config.xml: {{ include "flemmarr.configData" . | b64enc }}
+{{- else }}
+data:
+  config.xml: |
+    {{- include "flemmarr.configData" . | nindent 4 }}
+{{- end -}}
+{{- end }}

@@ -5,11 +5,7 @@ kind: Service
 metadata:
   name: qbittorrent
   labels:
-    app.kubernetes.io/instance: qbittorrent
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: qbittorrent
-    app.kubernetes.io/version: v4.4.2
-    helm.sh/chart: qbittorrent-13.5.2
+    {{- include "qbittorrent.labels" . | nindent 4 }}
   annotations:
 spec:
   type: ClusterIP
@@ -23,5 +19,4 @@ spec:
       protocol: TCP
       name: metrics
   selector:
-    app.kubernetes.io/name: qbittorrent
-    app.kubernetes.io/instance: qbittorrent
+    {{- include "qbittorrent.selectorLabels" . | nindent 4 }}

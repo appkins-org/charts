@@ -22,6 +22,9 @@ spec:
         {{- include "qbittorrent.selectorLabels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "servarr.serviceAccountName" . }}
+      {{- if or .Values.common.priorityClassName .Values.qbittorrent.priorityClassName }}
+      priorityClassName: {{ coalesce .Values.common.priorityClassName .Values.qbittorrent.priorityClassName | quote }}
+      {{- end }}
       automountServiceAccountToken: true
       dnsPolicy: ClusterFirst
       enableServiceLinks: true

@@ -116,7 +116,7 @@ tolerations: []
 
 affinity: {}
 
-flamarr:
+flemmarr:
   name: flemmarr
   image:
     repository: pierremesure/flemmarr
@@ -164,6 +164,7 @@ sonarr:
 
   service:
     port: 8989
+    type: ClusterIP
 
   ingress:
     enabled: false
@@ -178,6 +179,15 @@ sonarr:
 
   readinessProbe: {}
 
+  postgresql:
+    enabled: false
+    # username: sonarr
+    # password: sonarr
+    # database: sonarr-main
+    # host: postgresql
+    # port: 5432
+    # logdb: sonarr-log
+
   persistence:
     config:
       enabled: false
@@ -187,9 +197,9 @@ sonarr:
       mountPath: /media
 
   metrics:
+    enabled: false
     # -- Enable and configure Exportarr sidecar and Prometheus serviceMonitor.
     # @default -- See values.yaml
-    enabled: false
     serviceMonitor:
       interval: 3m
       scrapeTimeout: 1m
@@ -213,13 +223,15 @@ sonarr:
         #   labels:
         #     severity: critical
     exporter:
+      enabled: false
       image:
         # -- image repository
         repository: ghcr.io/onedr0p/exportarr
         # -- image tag
-        tag: v1.0.0
+        tag: latest
         # -- image pull policy
         pullPolicy: IfNotPresent
+      port: 9707
       env:
         # -- metrics port
         port: 9794

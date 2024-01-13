@@ -1,4 +1,4 @@
-{{- define "flamarr.configData" -}}
+{{- define "flemmarr.configData" -}}
 sonarr:
   server:
     address: sonarr

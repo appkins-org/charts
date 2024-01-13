@@ -46,7 +46,9 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      priorityClassName: {{ include "sonarr.priorityClassName" . | quote }}
+      {{- if or .Values.common.priorityClassName .Values.sonarr.priorityClassName }}
+      priorityClassName: {{ coalesce .Values.common.priorityClassName .Values.sonarr.priorityClassName | quote }}
+      {{- end }}
       {{- with .Values.common.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -54,14 +56,11 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.sonarr.terminationGracePeriodSeconds }}
       containers:
       - name: sonarr
-        image: {{ printf "%s:%s" .Values.sonarr.image.repository .Values.sonarr.image.tag | quote }}
+        image: {{ printf "%s:%s" .Values.sonarr.image.repository .Values.sonarr.image.tag }}
         imagePullPolicy: {{ .Values.sonarr.image.pullPolicy | quote }}
         ports:
           - name: http
             containerPort: {{ default 8989 .Values.sonarr.service.port }}
-            protocol: TCP
-          - name: http-metrics
-            containerPort: 3100
             protocol: TCP
         env:
           - name: TZ
@@ -101,12 +100,16 @@ spec:
           failureThreshold: 30
           timeoutSeconds: 1
           periodSeconds: 5
-
+      {{- if or .Values.sonarr.metrics.enabled .Values.sonarr.metrics.exporter.enabled }}
       - name: exporter
-        image: ghcr.io/onedr0p/exportarr:latest
+        image: {{ printf "%s:%s" .Values.sonarr.metrics.exporter.image.repository .Values.sonarr.metrics.exporter.image.tag | quote }}
+        ports:
+          - name: metrics
+            containerPort: {{ default 9543 .Values.sonarr.metrics.exporter.port }}
+            protocol: TCP
         env:
           - name: PORT
-            value: "9707"
+            value: {{ default 9543 .Values.sonarr.metrics.exporter.port | quote }}
         volumeMounts:
           - name: config
             mountPath: /etc/loki/config
@@ -116,6 +119,7 @@ spec:
             mountPath: /tmp
           - name: data
             mountPath: /var/loki
+      {{- end }}
       {{- with .Values.sonarr.affinity }}
       affinity:
         {{- tpl . $ | nindent 8 }}
