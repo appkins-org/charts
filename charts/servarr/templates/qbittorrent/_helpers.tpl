@@ -6,7 +6,7 @@
 qbittorrent common labels
 */}}
 {{- define "qbittorrent.labels" -}}
-{{ include "servarr.labels" . }}
+{{- include "servarr.labels" . }}
 app.kubernetes.io/component: qbittorrent
 {{- end }}
 
@@ -14,7 +14,7 @@ app.kubernetes.io/component: qbittorrent
 qbittorrent selector labels
 */}}
 {{- define "qbittorrent.selectorLabels" -}}
-{{ include "servarr.selectorLabels" . }}
+{{- include "servarr.selectorLabels" . }}
 app.kubernetes.io/component: qbittorrent
 {{- end }}
 
@@ -28,13 +28,13 @@ priorityClassName: {{ $pcn }}
 {{- end }}
 {{- end }}
 
-{{- define "qbittorrent.port" -}}
+{{- define "qbittorrent.port" }}
 {{- default 8000 .Values.qbittorrent.service.port }}
 {{- end }}
 
 {{- define "qbittorrent.apiKey" -}}
-{{ default (uuidv4 | replace "-" "") .Values.qbittorrent.apiKey }}
-{{- end -}}
+{{- default (uuidv4 | replace "-" "") .Values.qbittorrent.apiKey }}
+{{- end }}
 
 {{- define "qbittorrent.configData" -}}
 [AutoRun]
@@ -74,20 +74,20 @@ WebUI\CSRFProtection=false
 WebUI\CustomHTTPHeadersEnabled=false
 WebUI\AuthSubnetWhitelistEnabled=true
 WebUI\AuthSubnetWhitelist=10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 0.0.0.0/0
-{{- end -}}
+{{- end }}
 
 {{/*
 The volume to mount for loki configuration
 */}}
 {{- define "qbittorrent.configVolume" -}}
-{{- if eq .Values.qbittorrent.configStorageType "Secret" -}}
+{{- if eq .Values.qbittorrent.configStorageType "Secret" }}
 secret:
   secretName: {{ tpl .Values.qbittorrent.externalConfigSecretName . }}
-{{- else if eq .Values.qbittorrent.configStorageType "ConfigMap" -}}
+{{- else if eq .Values.qbittorrent.configStorageType "ConfigMap" }}
 configMap:
   name: {{ tpl .Values.qbittorrent.externalConfigSecretName . }}
   items:
     - key: "config.xml"
       path: "config.xml"
-{{- end -}}
-{{- end -}}
+{{- end }}
+{{- end }}
