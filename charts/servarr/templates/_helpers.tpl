@@ -131,8 +131,8 @@ downloadclient:
 
 {{- define "servarr.flemmarrSection" -}}
 {{- $v := first . -}}
-{{- $k := last . -}}
-{{- $k }}:
+{{- $k := last . }}
+{{ $k -}}:
   server:
     address: http://{{ $k }}.media.svc.cluster.local
     port: {{ $v.service.port }}
@@ -143,6 +143,6 @@ downloadclient:
   {{- with $v.rootfolder }}
   rootfolder:
     {{- toYaml . | nindent 4 }}
-  {{- end }}
-  {{ include "servarr.downloadclient" $ | nindent 2 }}
+  {{- end -}}
+  {{- include "servarr.downloadclient" $ | nindent 2 }}
 {{- end }}

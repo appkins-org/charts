@@ -58,6 +58,6 @@ metadata:
     app.kubernetes.io/component: flemmarr
 data:
   config.yml: |
-    {{ range $key, $val := pick .Values "sonarr" "radarr" | default dict }} # "lidarr" "readarr" "prowlarr" | default dict }}
-    {{ list $val $key | include "servarr.flemmarrSection" | indent 4}}
-    {{ end }}
+    {{- range $key, $val := pick .Values "sonarr" "radarr" | default dict -}}
+    {{- list $val $key | include "servarr.flemmarrSection" | indent 4 }}
+    {{ end -}}
