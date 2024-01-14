@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flemmarr
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    reloader.stakater.com/auto: "true"
+  labels:
+    {{- include "servarr.labels" . | nindent 4 }}
+    app.kubernetes.io/component: flemmarr
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      {{- include "servarr.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: flemmarr
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.global.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "servarr.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: flemmarr
+    spec:
+      serviceAccountName: {{ include "servarr.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.global.priorityClassName }}
+      priorityClassName: {{ coalesce .Values.global.priorityClassName | quote }}
+      {{- end }}
+      {{- with .Values.global.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+      - name: config
+        image: ghcr.io/appkins/flemmarr:latest
+        volumeMounts:
+          - name: config
+            mountPath: /config
+      containers:
+        - name: pause
+          image: registry.k8s.io/pause:3.9
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            privileged: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - all
+          resources:
+            requests:
+              cpu: 10m
+              memory: 8Mi
+            limits:
+              cpu: 100m
+              memory: 8Mi
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: data
+          emptyDir: {}
+        - name: config
+          emptyDir: {}
+        - name: config-init
+          configMap:
+            name: flemmarr-configmap
+            items:
+              - key: config.yml
+                path: "config.yml"

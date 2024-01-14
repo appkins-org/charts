@@ -27,3 +27,6 @@ dependencies:
   - name: postgresql
     version: 13.2.29
     repository: oci://registry-1.docker.io/bitnamicharts
+  - name: reloader
+    version: 1.0.62
+    repository: https://stakater.github.io/stakater-charts

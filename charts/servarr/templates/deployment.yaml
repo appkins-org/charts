@@ -1,82 +1,88 @@
+{{- range $key, $val := pick .Values "sonarr" "radarr" | default dict }} # "lidarr" "readarr" "prowlarr" | default dict }}
+{{- $port := $val.service.port }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "sonarr.name" . }}
-  namespace: {{ .Release.Namespace }}
+  name: {{ $key }}
+  namespace: {{ $.Release.Namespace }}
   labels:
-    {{- include "sonarr.labels" . | nindent 4 }}
+    {{- include "servarr.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $key }}
 spec:
-  {{- include "sonarr.replicas" . | nindent 2 }}
+  replicas: 1
   strategy:
     rollingUpdate:
       maxSurge: 0
       maxUnavailable: 1
-  revisionHistoryLimit: {{ .Values.global.revisionHistoryLimit }}
+  revisionHistoryLimit: {{ $.Values.global.revisionHistoryLimit }}
   selector:
     matchLabels:
-      {{- include "sonarr.selectorLabels" . | nindent 6 }}
+      {{- include "servarr.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $key }}
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print .Template.BasePath "/sonarr/config.yaml") . | sha256sum }}
-        {{- with .Values.global.podAnnotations }}
+        checksum/config: {{ include (print $.Template.BasePath "/config.yaml") $ | sha256sum }}
+        {{- with $.Values.global.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- with .Values.sonarr.podAnnotations }}
+        {{- with $val.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
-        {{- include "sonarr.selectorLabels" . | nindent 8 }}
-        {{- with .Values.global.podLabels }}
+        {{- include "servarr.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: {{ $key }}
+        {{- with $.Values.global.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- with .Values.sonarr.podLabels }}
+        {{- with $val.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- with .Values.sonarr.selectorLabels }}
+        {{- with $val.selectorLabels }}
         {{- tpl (toYaml .) $ | nindent 8 }}
         {{- end }}
     spec:
-      serviceAccountName: {{ include "servarr.serviceAccountName" . }}
-      {{- with .Values.imagePullSecrets }}
+      serviceAccountName: {{ include "servarr.serviceAccountName" $ }}
+      {{- with $.Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if or .Values.global.priorityClassName .Values.sonarr.priorityClassName }}
-      priorityClassName: {{ coalesce .Values.global.priorityClassName .Values.sonarr.priorityClassName | quote }}
+      {{- if or $.Values.global.priorityClassName $val.priorityClassName }}
+      priorityClassName: {{ coalesce $.Values.global.priorityClassName $val.priorityClassName | quote }}
       {{- end }}
-      {{- with .Values.global.podSecurityContext }}
+      {{- with $.Values.global.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      terminationGracePeriodSeconds: {{ .Values.sonarr.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ $val.terminationGracePeriodSeconds }}
       initContainers:
-      - name: sonarr-init-db
+      - name: {{ $key }}-init-db
         image: "bitnami/postgresql:latest"
         command:
           - /bin/sh
           - -c
         args:
           - |
-            echo "Creating DB for sonarr..." && psql postgresql://postgres:$(POSTGRES_PASSWORD)@servarr-postgresql.media.svc.cluster.local:5432/postgres << SQL
-            CREATE USER sonarr WITH PASSWORD '$(POSTGRES_SONARR_PASSWORD)' CREATEDB CREATEROLE SUPERUSER;
-            CREATE DATABASE sonarr_log OWNER sonarr;
-            CREATE DATABASE sonarr OWNER sonarr;
+            echo "Creating DB for servarr..." && psql postgresql://postgres:$(POSTGRES_PASSWORD)@servarr-postgresql.media.svc.cluster.local:5432/postgres << SQL
+            CREATE USER {{ $key }} WITH PASSWORD '$(POSTGRES_{{ $key | upper }}_PASSWORD)' CREATEDB CREATEROLE SUPERUSER;
+            CREATE DATABASE {{ $key }}_log OWNER {{ $key }};
+            CREATE DATABASE {{ $key }} OWNER {{ $key }};
             SQL
         env:
-          - name: POSTGRES_SONARR_PASSWORD
+          - name: POSTGRES_{{ $key | upper }}_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: {{ include "servarr.name" . }}-postgresql
-                key: postgres_sonarr_password
+                name: {{ include "servarr.name" $ }}-postgresql
+                key: postgres_{{ $key }}_password
           - name: POSTGRES_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: {{ include "servarr.name" . }}-postgresql
+                name: {{ include "servarr.name" $ }}-postgresql
                 key: postgres_admin_password
-      - name: sonarr-init-config
+      - name: {{ $key }}-init-config
         image: mikefarah/yq
-        imagePullPolicy: {{ .Values.sonarr.image.pullPolicy | quote }}
+        imagePullPolicy: {{ $val.image.pullPolicy | quote }}
         command:
           - /bin/sh
           - -c
@@ -90,12 +96,12 @@ spec:
           - name: config-init
             mountPath: /ro
       containers:
-      - name: sonarr
-        image: {{ printf "%s:%s" .Values.sonarr.image.repository .Values.sonarr.image.tag }}
-        imagePullPolicy: {{ .Values.sonarr.image.pullPolicy | quote }}
+      - name: {{ $key }}
+        image: {{ printf "%s:%s" $val.image.repository $val.image.tag }}
+        imagePullPolicy: {{ $val.image.pullPolicy | quote }}
         ports:
           - name: http
-            containerPort: {{ default 8989 .Values.sonarr.service.port }}
+            containerPort: {{ default 8989 $val.service.port }}
             protocol: TCP
         volumeMounts:
           - name: config
@@ -110,23 +116,23 @@ spec:
             mountPath: /data/series
         env:
           - name: TZ
-            value: {{ .Values.global.timezone | default "UTC" | quote }}
-         {{- with .Values.sonarr.extraEnv }}
+            value: {{ $.Values.global.timezone | default "UTC" | quote }}
+         {{- with $val.extraEnv }}
          {{- toYaml . | nindent 10 }}
          {{- end }}
-        {{- with .Values.sonarr.extraEnvFrom }}
+        {{- with $val.extraEnvFrom }}
         envFrom:
           {{- toYaml . | nindent 10 }}
         {{- end }}
         securityContext:
-          {{- toYaml .Values.global.containerSecurityContext | nindent 10 }}
+          {{- toYaml $.Values.global.containerSecurityContext | nindent 10 }}
         livenessProbe:
           exec:
             command:
             - /usr/bin/env
             - bash
             - -c
-            - curl --fail localhost:{{ include "sonarr.port" . }}/api/v3/system/status?apiKey=`IFS=\\> && while read -d \\< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`
+            - curl --fail localhost:{{ $port }}/api/v3/system/status?apiKey=`IFS=\\> && while read -d \\< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`
           failureThreshold: 5
           initialDelaySeconds: 60
           periodSeconds: 10
@@ -138,13 +144,13 @@ spec:
             - /usr/bin/env
             - bash
             - -c
-            - curl --fail localhost:{{ include "sonarr.port" . }}/api/v3/system/status?apiKey=`IFS=\\> && while read -d \\< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`
+            - curl --fail localhost:{{ $port }}/api/v3/system/status?apiKey=`IFS=\\> && while read -d \\< E C; do if [[ $E = "ApiKey" ]]; then echo $C; fi; done < /config/config.xml`
           failureThreshold: 5
           initialDelaySeconds: 60
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 10
-      {{- if or .Values.sonarr.config.enabled }}
+      {{- if or $val.config.enabled }}
       - name: config
         image: ghcr.io/appkins/flemmarr:latest
         # command:
@@ -159,16 +165,16 @@ spec:
           - name: data
             mountPath: /data
       {{- end }}
-      {{- if or .Values.sonarr.metrics.enabled .Values.sonarr.metrics.exporter.enabled }}
+      {{- if or $val.metrics.enabled $val.metrics.exporter.enabled }}
       - name: exporter
-        image: {{ printf "%s:%s" .Values.sonarr.metrics.exporter.image.repository .Values.sonarr.metrics.exporter.image.tag | quote }}
+        image: {{ printf "%s:%s" $val.metrics.exporter.image.repository $val.metrics.exporter.image.tag | quote }}
         ports:
           - name: metrics
-            containerPort: {{ default 9543 .Values.sonarr.metrics.exporter.port }}
+            containerPort: {{ default 9543 $val.metrics.exporter.port }}
             protocol: TCP
         env:
           - name: PORT
-            value: {{ default 9543 .Values.sonarr.metrics.exporter.port | quote }}
+            value: {{ default 9543 $val.metrics.exporter.port | quote }}
         volumeMounts:
           - name: config
             mountPath: /config
@@ -177,19 +183,19 @@ spec:
           - name: data
             mountPath: /data
       {{- end }}
-      {{- with .Values.sonarr.affinity }}
+      {{- with $val.affinity }}
       affinity:
         {{- tpl . $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.sonarr.dnsConfig }}
+      {{- with $val.dnsConfig }}
       dnsConfig:
         {{- tpl . $ | nindent 8 }}
       {{- end }}
-      {{- with .Values.sonarr.nodeSelector }}
+      {{- with $val.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.sonarr.tolerations }}
+      {{- with $val.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -202,13 +208,18 @@ spec:
           emptyDir: {}
         - name: downloads
           persistentVolumeClaim:
-            claimName: {{ include "servarr.name" . }}-downloads
+            claimName: {{ include "servarr.name" $ }}-downloads
         - name: media
           persistentVolumeClaim:
-            claimName: {{ include "servarr.name" . }}-media
+            claimName: {{ include "servarr.name" $ }}-media
         - name: config-init
-          {{- include "sonarr.configVolume" . | nindent 10 }}
+          configMap:
+            name: {{ $.Release.Name }}-config
+            items:
+              - key: {{ $key }}-config.xml
+                path: "config.xml"
         # Extra volumes
-        {{- with .Values.sonarr.extraVolumes }}
+        {{- with $val.extraVolumes }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
+{{ end -}}
