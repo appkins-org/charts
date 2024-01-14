@@ -54,11 +54,11 @@ spec:
       - name: sonarr-init-db
         image: "bitnami/postgresql:latest"
         command:
-          - /opt/bitnami/postgresql/bin/psql
-          - "host=servarr-postgresql port=5432 dbname=postgres user=postgres password=$(POSTGRES_PASSWORD)"
+          - /bin/sh
+          - -c
         args:
           - |
-            << SQL
+            echo "Creating DB for sonarr..." && psql postgresql://postgres:$(POSTGRES_PASSWORD)@servarr-postgresql.media.svc.cluster.local:5432/postgres << SQL
             CREATE USER sonarr WITH PASSWORD '$(POSTGRES_SONARR_PASSWORD)' CREATEDB CREATEROLE SUPERUSER;
             CREATE DATABASE sonarr OWNER sonarr;
             SQL
