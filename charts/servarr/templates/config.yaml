@@ -23,16 +23,27 @@ data:
       <Port>{{ $val.service.port }}</Port>
       <SslPort>9898</SslPort>
       <EnableSsl>False</EnableSsl>
-      <LaunchBrowser>True</LaunchBrowser>
+      <LaunchBrowser>False</LaunchBrowser>
       <ApiKey>{{ get $apiKeys $key }}</ApiKey>
-      <AuthenticationMethod>None</AuthenticationMethod>
-      <Branch>master</Branch>
+      <AuthenticationMethod>External</AuthenticationMethod>
+      <Branch>main</Branch>
       <LogLevel>info</LogLevel>
       <SslCertPath></SslCertPath>
       <SslCertPassword></SslCertPassword>
       <UrlBase></UrlBase>
       <InstanceName>{{ $key }}</InstanceName>
       <UpdateMechanism>Docker</UpdateMechanism>
+      <UpdateAutomatically>False</UpdateAutomatically>
       <AnalyticsEnabled>False</AnalyticsEnabled>
+{{- if and $val.postgresql (default false $val.postgresql.enabled) }}
+  {{- with $val.postgresql }}
+      <PostgresUser>{{ default $key .username }}</PostgresUser>
+      <PostgresPassword>{{ default "admin" .password }}</PostgresPassword>
+      <PostgresPort>{{ default "5432" .port }}</PostgresPort>
+      <PostgresHost>{{ default $key .host }}</PostgresHost>
+      <PostgresMainDb>{{ default $key .database }}</PostgresMainDb>
+      <PostgresLogDb>{{ default (printf "%s_log" $key) .logdb }}</PostgresLogDb>
+  {{- end }}
+{{- end }}
     </Config>
 {{ end -}}

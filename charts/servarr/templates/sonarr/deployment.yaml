@@ -110,6 +110,8 @@ spec:
           - name: data
             mountPath: /data
           - name: downloads
+            mountPath: /downloads
+          - name: media
             mountPath: /data/series
         env:
           - name: TZ
@@ -225,6 +227,9 @@ spec:
         - name: downloads
           persistentVolumeClaim:
             claimName: {{ include "servarr.name" . }}-downloads
+        - name: media
+          persistentVolumeClaim:
+            claimName: {{ include "servarr.name" . }}-media
         - name: config-init
           {{- include "sonarr.configVolume" . | nindent 10 }}
         # Extra volumes
