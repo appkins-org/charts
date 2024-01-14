@@ -65,13 +65,7 @@ spec:
               cpu: 100m
               memory: 8Mi
       volumes:
-        - name: tmp
-          emptyDir: {}
-        - name: data
-          emptyDir: {}
         - name: config
-          emptyDir: {}
-        - name: config-init
           configMap:
             name: flemmarr-configmap
             items:

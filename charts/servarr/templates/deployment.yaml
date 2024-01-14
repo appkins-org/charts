@@ -91,8 +91,6 @@ spec:
         volumeMounts:
           - name: config
             mountPath: /config
-          - name: data
-            mountPath: /data
           - name: config-init
             mountPath: /ro
       containers:
@@ -108,12 +106,10 @@ spec:
             mountPath: /config
           - name: tmp
             mountPath: /tmp
-          - name: data
-            mountPath: /data
           - name: downloads
             mountPath: /downloads
           - name: media
-            mountPath: /data/series
+            mountPath: /data
         env:
           - name: TZ
             value: {{ $.Values.global.timezone | default "UTC" | quote }}
@@ -162,7 +158,7 @@ spec:
             mountPath: /config
           - name: tmp
             mountPath: /tmp
-          - name: data
+          - name: media
             mountPath: /data
       {{- end }}
       {{- if or $val.metrics.enabled $val.metrics.exporter.enabled }}
@@ -180,7 +176,7 @@ spec:
             mountPath: /config
           - name: tmp
             mountPath: /tmp
-          - name: data
+          - name: media
             mountPath: /data
       {{- end }}
       {{- with $val.affinity }}
@@ -201,8 +197,6 @@ spec:
       {{- end }}
       volumes:
         - name: tmp
-          emptyDir: {}
-        - name: data
           emptyDir: {}
         - name: config
           emptyDir: {}

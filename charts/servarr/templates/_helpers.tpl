@@ -94,3 +94,55 @@ Return the appropriate apiVersion for ingress.
 {{- define "servarr.postgresql.sonarrPassword" }}
 {{- default "admin" .Values.sonarr.postgresql.password }}
 {{- end }}
+
+{{- define "servarr.downloadclient" }}
+downloadclient:
+- name: qBittorrent
+  enable: true
+  protocol: torrent
+  priority: 2
+  removeCompletedDownloads: true
+  removeFailedDownloads: true
+  fields:
+  - name: host
+    value: qbittorrent.media.svc.cluster.local
+  - name: port
+    value: 8080
+  - name: username
+    value: admin
+  - name: password
+    value: adminadmin
+  - name: tvCategory
+    value: tv
+  - name: recentTvPriority
+    value: 0
+  - name: olderTvPriority
+    value: 0
+  - name: initialState
+    value: 0
+  - name: sequentialOrder
+    value: false
+  - name: firstAndLast
+    value: false
+  implementation: QBittorrent
+  configContract: QBittorrentSettings
+{{- end }}
+
+
+{{- define "servarr.flemmarrSection" -}}
+{{- $v := first . -}}
+{{- $k := last . -}}
+{{- $k }}:
+  server:
+    address: http://{{ $k }}.media.svc.cluster.local
+    port: {{ $v.service.port }}
+  {{- with omit $v.config "enabled" }}
+  config:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $v.rootfolder }}
+  rootfolder:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{ include "servarr.downloadclient" $ | nindent 2 }}
+{{- end }}

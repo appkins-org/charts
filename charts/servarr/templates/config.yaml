@@ -47,3 +47,17 @@ data:
 {{- end }}
     </Config>
 {{ end -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flemmarr-configmap
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "servarr.labels" . | nindent 4 }}
+    app.kubernetes.io/component: flemmarr
+data:
+  config.yml: |
+    {{ range $key, $val := pick .Values "sonarr" "radarr" | default dict }} # "lidarr" "readarr" "prowlarr" | default dict }}
+    {{ list $val $key | include "servarr.flemmarrSection" | indent 4}}
+    {{ end }}
