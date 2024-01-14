@@ -82,3 +82,15 @@ Return the appropriate apiVersion for ingress.
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{- define "servarr.postgresql.userPassword" }}
+{{- default (uuidv4 | replace "-" "") .Values.global.postgresql.auth.password }}
+{{- end }}
+
+{{- define "servarr.postgresql.adminPassword" }}
+{{- default (uuidv4 | replace "-" "") .Values.global.postgresql.auth.postgresPassword }}
+{{- end }}
+
+{{- define "servarr.postgresql.sonarrPassword" }}
+{{- default "admin" .Values.sonarr.postgresql.password }}
+{{- end }}

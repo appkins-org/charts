@@ -9,7 +9,7 @@
 {{- define "sonarr.replicas" -}}
 {{- if not .Values.sonarr.autoscaling.enabled -}}
 {{- if .Values.sonarr.postgresql.enabled -}}
-replicas: {{- default 1 .Values.sonarr.replicas }}
+replicas: {{ default 1 .Values.sonarr.replicas }}
 {{- else -}}
 replicas: 1
 {{- end }}
@@ -50,7 +50,7 @@ app.kubernetes.io/component: sonarr
   <EnableSsl>False</EnableSsl>
   <LaunchBrowser>False</LaunchBrowser>
   <ApiKey>{{ include "sonarr.apiKey" $ }}</ApiKey>
-  <AuthenticationMethod>None</AuthenticationMethod>
+  <AuthenticationMethod>External</AuthenticationMethod>
   <Branch>main</Branch>
   <LogLevel>info</LogLevel>
   <SslCertPath></SslCertPath>
@@ -63,7 +63,7 @@ app.kubernetes.io/component: sonarr
 {{- if (default false .postgresql.enabled) }}
   {{- with .postgresql }}
   <PostgresUser>{{ default $name .username }}</PostgresUser>
-  <PostgresPassword>{{ default $name .password }}</PostgresPassword>
+  <PostgresPassword>{{ default "admin" .password }}</PostgresPassword>
   <PostgresPort>{{ default "5432" .port }}</PostgresPort>
   <PostgresHost>{{ default $name .host }}</PostgresHost>
   <PostgresMainDb>{{ default (printf "%s-main" $name) .database }}</PostgresMainDb>
@@ -103,9 +103,9 @@ sonarr:
       - name: port
         value: 8080
       - name: username
-        value: username
+        value: admin
       - name: password
-        value: password
+        value: admin
       - name: tvCategory
         value: tv
       - name: recentTvPriority

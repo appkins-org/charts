@@ -31,6 +31,17 @@ global:
       # drop:
       #   - ALL
     allowPrivilegeEscalation: true
+  # -- Global postgresql configuration
+  postgresql:
+    auth:
+      existingSecret: servarr-postgresql
+      username: servarr
+      database: servarr
+      #  password: password
+      #  postgresPassword: null
+      secretKeys:
+        adminPasswordKey: postgres_admin_password
+        userPasswordKey: postgres_user_password
 
   persistence:
     storageClass: null
@@ -44,9 +55,11 @@ imagePullSecrets: []
 
 serviceAccount:
   # Specifies whether a service account should be created
-  create: true
+  create: &saCreate false
   # Annotations to add to the service account
   annotations: {}
+
+  labels: {}
   # Whether to automount the service account token
   automountServiceAccountToken: true
   # The name of the service account to use.
@@ -123,8 +136,10 @@ flemmarr:
     pullPolicy: IfNotPresent
 
 sonarr:
-  name: sonarr
+  name: &sonarrName sonarr
   enabled: true
+
+  port: &sonarPort 8989
 
   image:
     repository: lscr.io/linuxserver/sonarr
@@ -132,6 +147,25 @@ sonarr:
     pullPolicy: IfNotPresent
 
   terminationGracePeriodSeconds: 30
+
+  server:
+    bindAddress: "*"
+    port: *sonarPort
+    sslPort: 9898
+    enableSsl: false
+    launchBrowser: false
+    apiKey: null
+    authenticationMethod: External
+    authenticationRequired: DisabledForLocalAddresses
+    branch: main
+    logLevel: info
+    sslCertPath: null
+    sslCertPassword: null
+    urlBase: null
+    instanceName: *sonarrName
+    updateMechanism: External
+    updateAutomatically: false
+    analyticsEnabled: false
 
   config:
     enabled: true
@@ -177,12 +211,12 @@ sonarr:
       extraFileExtensions: srt
       enableMediaInfo: true
 
-  rootfolder:
-    - name: Series
-      path: /data/series
-      defaultTags: []
-      defaultQualityProfileId: 1
-      defaultMetadataProfileId: 1
+  rootfolder: []
+  #  - name: Series
+  #    path: /data/series
+  #    defaultTags: []
+  #    defaultQualityProfileId: 1
+  #    defaultMetadataProfileId: 1
 
   env:
     TZ: UTC
@@ -213,7 +247,7 @@ sonarr:
   replicas: 2
 
   service:
-    port: 8989
+    port: *sonarPort
     type: ClusterIP
 
   ingress:
@@ -232,7 +266,7 @@ sonarr:
   postgresql:
     enabled: false
     # username: sonarr
-    # password: sonarr
+    password: null
     # database: sonarr-main
     # host: postgresql
     # port: 5432
@@ -511,6 +545,27 @@ qbittorrent:
           - NET_ADMIN
           - SYS_MODULE
     env: []
+
+    config:
+      type: openvpn
+
+      serviceProvider: nordvpn
+
+      wireguard:
+        enabled: false
+        privateKey: ""
+        addresses: ""
+        publicKey: ""
+
+      openvpn:
+        enabled: true
+        user: openvpn
+        password: password
+
+      firewall:
+        inputPorts: "8080,8000,9022"
+        outboundSubnets: "10.0.0.0/8"
+        vpnInputPorts: "6881"
     #  - name: FIREWALL_INPUT_PORTS
     #    value: 8080,8000,9022
     #  - name: FIREWALL_OUTBOUND_SUBNETS
@@ -636,3 +691,25 @@ transmission:
     watch:
       enabled: false
       mountPath: /watch
+
+postgresql:
+  nameOverride: servarr-postgresql
+  fullnameOverride: servarr-postgresql
+
+  serviceAccount:
+    create: *saCreate
+  auth:
+    enablePostgresUser: true
+    existingSecret: servarr-secret
+  #  postgresPassword: ""
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 3m
+      scrapeTimeout: 1m
+      labels: {}
+    prometheusRule:
+      enabled: true
+      labels: {}
+      rules: []

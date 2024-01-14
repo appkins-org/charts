@@ -36,5 +36,3 @@ data:
       <AnalyticsEnabled>False</AnalyticsEnabled>
     </Config>
 {{ end -}}
-  config.yaml: |
-    test: val
