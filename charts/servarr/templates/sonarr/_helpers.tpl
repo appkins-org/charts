@@ -66,10 +66,8 @@ app.kubernetes.io/component: sonarr
   <PostgresPassword>{{ default "admin" .password }}</PostgresPassword>
   <PostgresPort>{{ default "5432" .port }}</PostgresPort>
   <PostgresHost>{{ default $name .host }}</PostgresHost>
-  <PostgresMainDb>{{ default (printf "%s-main" $name) .database }}</PostgresMainDb>
-  {{- if .logdb }}
-  <PostgresLogDb>{{ .logdb }}</PostgresLogDb>
-  {{- end }}
+  <PostgresMainDb>{{ default $name .database }}</PostgresMainDb>
+  <PostgresLogDb>{{ default (printf "%s_log" $name) .logdb }}</PostgresLogDb>
   {{- end }}
 {{- end }}
 </Config>
@@ -105,7 +103,7 @@ sonarr:
       - name: username
         value: admin
       - name: password
-        value: admin
+        value: adminadmin
       - name: tvCategory
         value: tv
       - name: recentTvPriority

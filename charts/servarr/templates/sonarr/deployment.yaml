@@ -60,6 +60,7 @@ spec:
           - |
             echo "Creating DB for sonarr..." && psql postgresql://postgres:$(POSTGRES_PASSWORD)@servarr-postgresql.media.svc.cluster.local:5432/postgres << SQL
             CREATE USER sonarr WITH PASSWORD '$(POSTGRES_SONARR_PASSWORD)' CREATEDB CREATEROLE SUPERUSER;
+            CREATE DATABASE sonarr_log OWNER sonarr;
             CREATE DATABASE sonarr OWNER sonarr;
             SQL
         env:
