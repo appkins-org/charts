@@ -95,6 +95,10 @@ Return the appropriate apiVersion for ingress.
 {{- default "admin" .Values.sonarr.postgresql.password }}
 {{- end }}
 
+{{- define "servarr.postgresql.radarrPassword" }}
+{{- default "admin" .Values.radarr.postgresql.password }}
+{{- end }}
+
 {{- define "servarr.downloadclient" }}
 downloadclient:
 - name: qBittorrent

@@ -146,21 +146,6 @@ spec:
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 10
-      {{- if or $val.config.enabled }}
-      - name: config
-        image: ghcr.io/appkins/flemmarr:latest
-        # command:
-        #   - /bin/sh
-        #   - -c
-        #   - cp -r /config/* /data/ && chown -R 1000:1000 /data
-        volumeMounts:
-          - name: config-init
-            mountPath: /config
-          - name: tmp
-            mountPath: /tmp
-          - name: media
-            mountPath: /data
-      {{- end }}
       {{- if or $val.metrics.enabled $val.metrics.exporter.enabled }}
       - name: exporter
         image: {{ printf "%s:%s" $val.metrics.exporter.image.repository $val.metrics.exporter.image.tag | quote }}
