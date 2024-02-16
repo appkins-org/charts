@@ -25,7 +25,8 @@ data:
       <EnableSsl>False</EnableSsl>
       <LaunchBrowser>False</LaunchBrowser>
       <ApiKey>{{ get $apiKeys $key }}</ApiKey>
-      <AuthenticationMethod>External</AuthenticationMethod>
+      <AuthenticationMethod>None</AuthenticationMethod>
+      <AuthenticationRequired>DisabledForLocalAddresses</AuthenticationRequired>
       <Branch>main</Branch>
       <LogLevel>info</LogLevel>
       <SslCertPath></SslCertPath>

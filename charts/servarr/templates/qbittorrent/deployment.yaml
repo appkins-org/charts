@@ -129,6 +129,10 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- with .resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
         {{- end }}
         {{- end }}
       volumes:

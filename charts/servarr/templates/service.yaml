@@ -1,0 +1,28 @@
+{{- range $key, $val := pick .Values "sonarr" "radarr" | default dict }} # "lidarr" "readarr" "prowlarr" | default dict }}
+{{- $port := $val.service.port }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $key }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "servarr.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $key }}
+spec:
+  type: {{ default "ClusterIP" $val.service.type | quote }}
+  ports:
+    - name: http
+      port: {{ $val.service.port }}
+      targetPort: http-webui
+      protocol: TCP
+    {{- if $val.metrics.enabled }}
+    - name: metrics
+      port: {{ default 9543 $val.metrics.exporter.port }}
+      targetPort: metrics
+      protocol: TCP
+    {{- end }}
+  selector:
+    {{- include "servarr.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $key }}
+{{ end -}}

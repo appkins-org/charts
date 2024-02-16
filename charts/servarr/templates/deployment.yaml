@@ -98,8 +98,8 @@ spec:
         image: {{ printf "%s:%s" $val.image.repository $val.image.tag }}
         imagePullPolicy: {{ $val.image.pullPolicy | quote }}
         ports:
-          - name: http
-            containerPort: {{ default 8989 $val.service.port }}
+          - name: http-webui
+            containerPort: {{ $port }}
             protocol: TCP
         volumeMounts:
           - name: config
