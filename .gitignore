@@ -13,3 +13,4 @@ charts/.*
 data/*.yaml
 .tmp
 .data
+.vscode/settings.json
