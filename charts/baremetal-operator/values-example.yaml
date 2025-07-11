@@ -1,0 +1,114 @@
+# Example values.yaml for the Baremetal Operator Helm Chart
+# This file demonstrates how to configure the baremetal-operator chart
+
+# Namespace configuration
+namespace:
+  create: true
+  name: baremetal-operator-system
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/part-of: metal3
+  app.kubernetes.io/component: baremetal-operator
+
+# Prefix for all resource names
+namePrefix: baremetal-operator-
+
+# Baremetal Operator configuration
+baremetalOperator:
+  replicaCount: 1
+  
+  image:
+    repository: quay.io/metal3-io/baremetal-operator
+    pullPolicy: Always
+    tag: "v0.7.0"
+  
+  # Resource limits and requests
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Service Account configuration
+serviceAccount:
+  create: true
+  name: controller-manager
+  annotations: {}
+
+# RBAC configuration
+rbac:
+  create: true
+
+# Webhook configuration
+webhook:
+  enabled: true
+  service:
+    name: webhook-service
+    port: 443
+    targetPort: 8443
+
+# Cert Manager configuration
+certManager:
+  enabled: true
+  issuer:
+    name: selfsigned-issuer
+    selfSigned: true
+  
+  certificate:
+    name: serving-cert
+    secretName: bmo-webhook-server-cert
+
+# CRDs configuration
+crds:
+  install: true
+  
+  # Enable webhook conversion for CRDs
+  webhookConversion:
+    enabled: true
+    enabledCrds:
+      - baremetalhosts
+      - hostfirmwarecomponents
+      - hostfirmwaresettings
+      - firmwareschemas
+      - preprovisioningimages
+      - bmceventsubscriptions
+      - hardwaredata
+      - dataimages
+      - hostupdatepolicies
+  
+  # Enable CA injection for CRDs (requires cert-manager)
+  caInjection:
+    enabled: true
+    enabledCrds:
+      - baremetalhosts
+      - hostfirmwarecomponents
+      - hostfirmwaresettings
+      - firmwareschemas
+      - preprovisioningimages
+      - bmceventsubscriptions
+      - hardwaredata
+      - dataimages
+      - hostupdatepolicies
+
+# Ironic configuration
+ironic:
+  config:
+    IRONIC_ENDPOINT: "http://ironic.baremetal-operator-system.svc.cluster.local:6385/v1"
+    IRONIC_INSPECTOR_ENDPOINT: "http://ironic-inspector.baremetal-operator-system.svc.cluster.local:5050/v1"
+    IRONIC_DEPLOYMENT: "Integrated"
+    IRONIC_TIMEOUT: "3600"
+    IRONIC_KERNEL_PARAMS: "console=ttyS0"
+
+# Prometheus monitoring (optional)
+prometheus:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    namespace: "monitoring"  # Optional: Deploy ServiceMonitor to monitoring namespace
+    labels:
+      app: baremetal-operator
+    interval: 30s
+    scrapeTimeout: 10s

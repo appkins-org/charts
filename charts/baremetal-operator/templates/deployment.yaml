@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.namePrefix }}controller-manager
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "baremetal-operator.labels" . | nindent 4 }}
+    control-plane: controller-manager
+    webhook: metal3-io-v1alpha1-baremetalhost
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.baremetalOperator.replicaCount }}
+  minReadySeconds: {{ .Values.baremetalOperator.minReadySeconds }}
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "baremetal-operator.labels" . | nindent 8 }}
+        control-plane: controller-manager
+        webhook: metal3-io-v1alpha1-baremetalhost
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.commonLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ .Values.namePrefix }}{{ .Values.serviceAccount.name }}
+      securityContext:
+        {{- toYaml .Values.baremetalOperator.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.baremetalOperator.terminationGracePeriodSeconds }}
+      containers:
+        - name: manager
+          image: "{{ .Values.baremetalOperator.image.repository }}:{{ .Values.baremetalOperator.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.baremetalOperator.image.pullPolicy }}
+          command:
+            - /baremetal-operator
+          args:
+            {{- toYaml .Values.baremetalOperator.args | nindent 12 }}
+          ports:
+            - name: {{ .Values.baremetalOperator.ports.webhook.name }}
+              containerPort: {{ .Values.baremetalOperator.ports.webhook.containerPort }}
+              protocol: {{ .Values.baremetalOperator.ports.webhook.protocol }}
+            {{- if .Values.prometheus.enabled }}
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+            {{- end }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.namePrefix }}ironic
+          securityContext:
+            {{- toYaml .Values.baremetalOperator.securityContext | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.baremetalOperator.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.baremetalOperator.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.baremetalOperator.resources | nindent 12 }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.baremetalOperator.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.baremetalOperator.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.baremetalOperator.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,22 @@
+{{- if .Values.prometheus.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.namePrefix }}controller-manager-metrics-service
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "baremetal-operator.labels" . | nindent 4 }}
+    control-plane: controller-manager
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: https
+      port: 8443
+      targetPort: https
+      protocol: TCP
+  selector:
+    control-plane: controller-manager
+{{- end }}

@@ -1,0 +1,33 @@
+{{- if .Values.webhook.enabled }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ .Values.namePrefix }}{{ .Values.webhook.validatingWebhookConfiguration.name }}
+  labels:
+    {{- include "baremetal-operator.labels" . | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- if .Values.certManager.enabled }}
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Values.namespace.name }}/{{ .Values.namePrefix }}{{ .Values.certManager.certificate.name }}
+  {{- end }}
+webhooks:
+{{- range .Values.webhook.validatingWebhookConfiguration.webhooks }}
+- admissionReviewVersions:
+  {{- toYaml $.Values.webhook.validatingWebhookConfiguration.admissionReviewVersions | nindent 4 }}
+  clientConfig:
+    service:
+      name: {{ $.Values.namePrefix }}{{ $.Values.webhook.service.name }}
+      namespace: {{ $.Values.namespace.name }}
+      path: {{ .path }}
+    {{- if not $.Values.certManager.enabled }}
+    caBundle: Cg==
+    {{- end }}
+  failurePolicy: {{ $.Values.webhook.validatingWebhookConfiguration.failurePolicy }}
+  name: {{ .name }}
+  rules:
+  {{- toYaml .rules | nindent 4 }}
+  sideEffects: {{ $.Values.webhook.validatingWebhookConfiguration.sideEffects }}
+{{- end }}
+{{- end }}

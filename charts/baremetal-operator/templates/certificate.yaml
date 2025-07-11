@@ -1,0 +1,36 @@
+{{- if .Values.certManager.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ .Values.namePrefix }}{{ .Values.certManager.issuer.name }}
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "baremetal-operator.labels" . | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.certManager.issuer.selfSigned }}
+  selfSigned: {}
+  {{- end }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.namePrefix }}{{ .Values.certManager.certificate.name }}
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "baremetal-operator.labels" . | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  dnsNames:
+  {{- range .Values.certManager.certificate.dnsNames }}
+  - {{ tpl . $ }}
+  {{- end }}
+  issuerRef:
+    kind: Issuer
+    name: {{ .Values.namePrefix }}{{ .Values.certManager.issuer.name }}
+  secretName: {{ .Values.certManager.certificate.secretName }}
+{{- end }}

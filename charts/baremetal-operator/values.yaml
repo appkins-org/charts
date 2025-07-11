@@ -1,0 +1,272 @@
+# Default values for baremetal-operator.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Baremetal Operator configuration
+baremetalOperator:
+  # Controller manager configuration
+  replicaCount: 1
+  image:
+    repository: quay.io/metal3-io/baremetal-operator
+    pullPolicy: Always
+    tag: ""
+
+  # Command arguments for the controller
+  args:
+  - --enable-leader-election
+  - --tls-min-version=TLS13
+  # Container ports
+  ports:
+    webhook:
+      containerPort: 8443
+      protocol: TCP
+      name: https
+    health:
+      containerPort: 9440
+      protocol: TCP
+      name: health
+
+  # Security context for the controller
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    privileged: false
+    runAsUser: 65532
+    runAsGroup: 65532
+
+  # Pod security context
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+
+  # Probes configuration
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: 9440
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 2
+    successThreshold: 1
+    failureThreshold: 10
+
+  readinessProbe:
+    httpGet:
+      path: /readyz
+      port: 9440
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 2
+    successThreshold: 1
+    failureThreshold: 10
+
+  # Resource limits and requests
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  # Node selection and scheduling
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  # Deployment configuration
+  minReadySeconds: 10
+  terminationGracePeriodSeconds: 10
+
+# Namespace configuration
+namespace:
+  create: true
+  name: baremetal-operator-system
+
+# Common labels and annotations
+commonLabels: {}
+# Example:
+# commonLabels:
+#   app.kubernetes.io/part-of: metal3
+
+namePrefix: baremetal-operator-
+
+# Service Account configuration
+serviceAccount:
+  create: true
+  name: controller-manager
+  annotations: {}
+
+# RBAC configuration
+rbac:
+  create: true
+
+# Webhook configuration
+webhook:
+  enabled: true
+  service:
+    name: webhook-service
+    port: 443
+    targetPort: 8443
+
+  # ValidatingWebhookConfiguration settings
+  validatingWebhookConfiguration:
+    name: validating-webhook-configuration
+    failurePolicy: Fail
+    sideEffects: None
+    admissionReviewVersions:
+    - v1
+    - v1beta
+    # Webhook rules configuration
+    webhooks:
+    - name: baremetalhost.metal3.io
+      path: /validate-metal3-io-v1alpha1-baremetalhost
+      rules:
+      - apiGroups: ["metal3.io"]
+        apiVersions: ["v1alpha1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["baremetalhosts"]
+
+    - name: bmceventsubscription.metal3.io
+      path: /validate-metal3-io-v1alpha1-bmceventsubscription
+      rules:
+      - apiGroups: ["metal3.io"]
+        apiVersions: ["v1alpha1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["bmceventsubscriptions"]
+
+# Cert Manager configuration
+certManager:
+  enabled: true
+  issuer:
+    name: selfsigned-issuer
+    selfSigned: true
+
+  certificate:
+    name: serving-cert
+    secretName: bmo-webhook-server-cert
+    dnsNames:
+    - "{{ .Values.webhook.service.name }}.{{ .Values.namespace.name }}.svc"
+    - "{{ .Values.webhook.service.name }}.{{ .Values.namespace.name }}.svc.cluster.local"
+
+# CRDs configuration
+crds:
+  # Install CRDs
+  install: true
+
+  # Enable webhook conversion for CRDs
+  webhookConversion:
+    enabled: true
+    # Which CRDs to enable webhook conversion for
+    enabledCrds:
+    - baremetalhosts
+    - hostfirmwarecomponents
+    - hostfirmwaresettings
+    - firmwareschemas
+    - preprovisioningimages
+    - bmceventsubscriptions
+    - hardwaredata
+    - dataimages
+    - hostupdatepolicies
+
+  # Enable CA injection for CRDs (requires cert-manager)
+  caInjection:
+    enabled: true
+    # Which CRDs to enable CA injection for
+    enabledCrds:
+    - baremetalhosts
+    - hostfirmwarecomponents
+    - hostfirmwaresettings
+    - firmwareschemas
+    - preprovisioningimages
+    - bmceventsubscriptions
+    - hardwaredata
+    - dataimages
+    - hostupdatepolicies
+
+  # List of all CRDs to install
+  crdList:
+  - name: baremetalhosts
+    group: metal3.io
+    kind: BareMetalHost
+    plural: baremetalhosts
+    shortNames: ["bmh", "bmhost"]
+  - name: hostfirmwarecomponents
+    group: metal3.io
+    kind: HostFirmwareComponents
+    plural: hostfirmwarecomponents
+  - name: hostfirmwaresettings
+    group: metal3.io
+    kind: HostFirmwareSettings
+    plural: hostfirmwaresettings
+  - name: firmwareschemas
+    group: metal3.io
+    kind: FirmwareSchema
+    plural: firmwareschemas
+  - name: preprovisioningimages
+    group: metal3.io
+    kind: PreprovisioningImage
+    plural: preprovisioningimages
+  - name: bmceventsubscriptions
+    group: metal3.io
+    kind: BMCEventSubscription
+    plural: bmceventsubscriptions
+  - name: hardwaredata
+    group: metal3.io
+    kind: HardwareData
+    plural: hardwaredata
+  - name: dataimages
+    group: metal3.io
+    kind: DataImage
+    plural: dataimages
+  - name: hostupdatepolicies
+    group: metal3.io
+    kind: HostUpdatePolicy
+    plural: hostupdatepolicies
+
+# Ironic configuration (ConfigMap)
+ironic:
+  config:
+    # Default ironic configuration
+    # Add your ironic environment variables here
+    # These will be populated into the ironic ConfigMap
+    # Example:
+    # IRONIC_ENDPOINT: "http://ironic.example.com:6385/v1"
+    # IRONIC_INSPECTOR_ENDPOINT: "http://ironic-inspector.example.com:5050/v1"
+
+    # Prometheus monitoring
+prometheus:
+  enabled: false
+  serviceMonitor:
+    enabled: false
+    # Namespace where the ServiceMonitor should be created
+    # If empty, it will use the same namespace as the chart
+    namespace: ""
+    labels: {}
+    interval: 30s
+    scrapeTimeout: 10s
+  
+  # Metrics service configuration
+  metricsService:
+    enabled: true
+    name: controller-manager-metrics-service
+    port: 8443
+    targetPort: https
+
+# Image pull secrets
+imagePullSecrets: []
+
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+
+# Additional pod annotations and labels
+podAnnotations: {}
+podLabels: {}
+
+# Additional volumes and volume mounts
+volumes: []
+volumeMounts: []

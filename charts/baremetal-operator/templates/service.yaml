@@ -1,0 +1,21 @@
+{{- if .Values.webhook.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.namePrefix }}{{ .Values.webhook.service.name }}
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "baremetal-operator.labels" . | nindent 4 }}
+    {{- with .Values.commonLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.webhook.service.port }}
+      targetPort: {{ .Values.webhook.service.targetPort }}
+      protocol: TCP
+      name: webhook
+  selector:
+    control-plane: controller-manager
+{{- end }}

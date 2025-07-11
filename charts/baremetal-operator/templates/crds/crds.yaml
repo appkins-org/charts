@@ -1,0 +1,50 @@
+{{- if .Values.crds.install }}
+# Install all CRDs from the original files
+# The original CRD files are maintained separately for easy updates
+{{- end }}
+
+{{- if .Values.crds.webhookConversion.enabled }}
+# Webhook conversion patches
+{{- range .Values.crds.crdList }}
+{{- $crdName := .name }}
+{{- if has $crdName $.Values.crds.webhookConversion.enabledCrds }}
+---
+# Webhook conversion patch for {{ $crdName }}
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: {{ $crdName }}.metal3.io
+spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        service:
+          namespace: {{ $.Values.namespace.name }}
+          name: {{ $.Values.namePrefix }}{{ $.Values.webhook.service.name }}
+          path: /convert
+        {{- if not $.Values.certManager.enabled }}
+        caBundle: Cg==
+        {{- end }}
+      conversionReviewVersions:
+      - v1
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.crds.caInjection.enabled }}
+# CA injection patches
+{{- range .Values.crds.crdList }}
+{{- $crdName := .name }}
+{{- if has $crdName $.Values.crds.caInjection.enabledCrds }}
+---
+# CA injection patch for {{ $crdName }}
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: {{ $crdName }}.metal3.io
+  annotations:
+    cert-manager.io/inject-ca-from: {{ $.Values.namespace.name }}/{{ $.Values.namePrefix }}{{ $.Values.certManager.certificate.name }}
+{{- end }}
+{{- end }}
+{{- end }}

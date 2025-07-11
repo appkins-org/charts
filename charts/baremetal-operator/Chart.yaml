@@ -1,0 +1,45 @@
+apiVersion: v2
+name: baremetal-operator
+description: A Helm chart for the Metal3 Baremetal Operator - manages bare metal hosts in Kubernetes
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.1.0
+
+# This is the version number of the application being deployed. This version number should be
+# incremented each time you make changes to the application. Versions are not expected to
+# follow Semantic Versioning. They should reflect the version the application is using.
+# It is recommended to use it with quotes.
+appVersion: "v0.7.0"
+
+# A chart can be either an 'application' or a 'library' chart.
+type: application
+
+# Keywords for searching
+keywords:
+  - metal3
+  - baremetal
+  - operator
+  - ironic
+  - infrastructure
+
+# Home page for the chart
+home: https://github.com/metal3-io/baremetal-operator
+
+# Sources
+sources:
+  - https://github.com/metal3-io/baremetal-operator
+  - https://github.com/appkins-org/charts
+
+# Maintainers
+maintainers:
+  - name: metal3-io
+    url: https://github.com/metal3-io
+
+# Dependencies
+dependencies: []
+
+# Annotations
+annotations:
+  category: Infrastructure
