@@ -96,11 +96,12 @@ crds:
 # Ironic configuration
 ironic:
   config:
-    IRONIC_ENDPOINT: "http://ironic.baremetal-operator-system.svc.cluster.local:6385/v1"
-    IRONIC_INSPECTOR_ENDPOINT: "http://ironic-inspector.baremetal-operator-system.svc.cluster.local:5050/v1"
+    IRONIC_ENDPOINT: "http://ironic.baremetal-operator-system.svc.cluster.local:6385/v1/"
+    IRONIC_INSPECTOR_ENDPOINT: "http://ironic-inspector.baremetal-operator-system.svc.cluster.local:5050/v1/"
     IRONIC_DEPLOYMENT: "Integrated"
     IRONIC_TIMEOUT: "3600"
     IRONIC_KERNEL_PARAMS: "console=ttyS0"
+    PROVISIONING_INTERFACE: "eth0"
 
 # Prometheus monitoring (optional)
 prometheus:

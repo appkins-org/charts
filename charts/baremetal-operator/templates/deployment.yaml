@@ -50,14 +50,12 @@ spec:
           args:
             {{- toYaml .Values.baremetalOperator.args | nindent 12 }}
           ports:
-            - name: {{ .Values.baremetalOperator.ports.webhook.name }}
-              containerPort: {{ .Values.baremetalOperator.ports.webhook.containerPort }}
-              protocol: {{ .Values.baremetalOperator.ports.webhook.protocol }}
-            {{- if .Values.prometheus.enabled }}
+            - name: webhook-server
+              containerPort: 9443
+              protocol: TCP
             - name: https
               containerPort: 8443
               protocol: TCP
-            {{- end }}
           env:
             - name: POD_NAME
               valueFrom:
@@ -69,7 +67,7 @@ spec:
                   fieldPath: metadata.namespace
           envFrom:
             - configMapRef:
-                name: {{ .Values.namePrefix }}ironic
+                name: ironic
           securityContext:
             {{- toYaml .Values.baremetalOperator.securityContext | nindent 12 }}
           livenessProbe:
@@ -78,14 +76,21 @@ spec:
             {{- toYaml .Values.baremetalOperator.readinessProbe | nindent 12 }}
           resources:
             {{- toYaml .Values.baremetalOperator.resources | nindent 12 }}
-          {{- with .Values.volumeMounts }}
           volumeMounts:
+            - name: cert
+              mountPath: /tmp/k8s-webhook-server/serving-certs
+              readOnly: true
+            {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
-          {{- end }}
-      {{- with .Values.volumes }}
+            {{- end }}
       volumes:
+        - name: cert
+          secret:
+            defaultMode: 420
+            secretName: {{ .Values.certManager.certificate.secretName }}
+        {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       {{- with .Values.baremetalOperator.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

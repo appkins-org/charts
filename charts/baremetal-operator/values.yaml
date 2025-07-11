@@ -9,7 +9,7 @@ baremetalOperator:
   image:
     repository: quay.io/metal3-io/baremetal-operator
     pullPolicy: Always
-    tag: ""
+    tag: "" # Defaults to Chart.appVersion
 
   # Command arguments for the controller
   args:
@@ -21,6 +21,10 @@ baremetalOperator:
       containerPort: 8443
       protocol: TCP
       name: https
+    webhookServer:
+      containerPort: 9443
+      protocol: TCP
+      name: webhook-server
     health:
       containerPort: 9440
       protocol: TCP
@@ -110,9 +114,7 @@ webhook:
   service:
     name: webhook-service
     port: 443
-    targetPort: 8443
-
-  # ValidatingWebhookConfiguration settings
+    targetPort: 9443 # ValidatingWebhookConfiguration settings
   validatingWebhookConfiguration:
     name: validating-webhook-configuration
     failurePolicy: Fail
@@ -149,8 +151,8 @@ certManager:
     name: serving-cert
     secretName: bmo-webhook-server-cert
     dnsNames:
-    - "{{ .Values.webhook.service.name }}.{{ .Values.namespace.name }}.svc"
-    - "{{ .Values.webhook.service.name }}.{{ .Values.namespace.name }}.svc.cluster.local"
+    - "{{ .Values.namePrefix }}{{ .Values.webhook.service.name }}.{{ .Values.namespace.name }}.svc"
+    - "{{ .Values.namePrefix }}{{ .Values.webhook.service.name }}.{{ .Values.namespace.name }}.svc.cluster.local"
 
 # CRDs configuration
 crds:
@@ -162,32 +164,32 @@ crds:
     enabled: true
     # Which CRDs to enable webhook conversion for
     enabledCrds:
-    - baremetalhosts
-    - hostfirmwarecomponents
-    - hostfirmwaresettings
-    - firmwareschemas
-    - preprovisioningimages
+    # - baremetalhosts
+    # - hostfirmwarecomponents
+    # - hostfirmwaresettings
+    # - firmwareschemas
+    # - preprovisioningimages
     - bmceventsubscriptions
-    - hardwaredata
-    - dataimages
-    - hostupdatepolicies
+    # - hardwaredata
+    # - dataimages
+    # - hostupdatepolicies
 
-  # Enable CA injection for CRDs (requires cert-manager)
+    # Enable CA injection for CRDs (requires cert-manager)
   caInjection:
     enabled: true
     # Which CRDs to enable CA injection for
     enabledCrds:
     - baremetalhosts
-    - hostfirmwarecomponents
-    - hostfirmwaresettings
-    - firmwareschemas
-    - preprovisioningimages
-    - bmceventsubscriptions
-    - hardwaredata
-    - dataimages
-    - hostupdatepolicies
+    # - hostfirmwarecomponents
+    # - hostfirmwaresettings
+    # - firmwareschemas
+    # - preprovisioningimages
+    # - bmceventsubscriptions
+    # - hardwaredata
+    # - dataimages
+    # - hostupdatepolicies
 
-  # List of all CRDs to install
+    # List of all CRDs to install
   crdList:
   - name: baremetalhosts
     group: metal3.io
@@ -230,11 +232,16 @@ crds:
 # Ironic configuration (ConfigMap)
 ironic:
   config:
-    # Default ironic configuration
-    # Add your ironic environment variables here
-    # These will be populated into the ironic ConfigMap
+    # Default ironic configuration to match the reference deployment
+    CACHEURL: "http://172.22.0.1/images"
+    DEPLOY_KERNEL_URL: "http://172.22.0.2:6180/images/ironic-python-agent.kernel"
+    DEPLOY_RAMDISK_URL: "http://172.22.0.2:6180/images/ironic-python-agent.initramfs"
+    DHCP_RANGE: "172.22.0.10,172.22.0.100"
+    HTTP_PORT: "6180"
+    IRONIC_ENDPOINT: "http://172.22.0.2:6385/v1/"
+    PROVISIONING_INTERFACE: "eth2"
+    # Additional configuration can be added here
     # Example:
-    # IRONIC_ENDPOINT: "http://ironic.example.com:6385/v1"
     # IRONIC_INSPECTOR_ENDPOINT: "http://ironic-inspector.example.com:5050/v1"
 
     # Prometheus monitoring
