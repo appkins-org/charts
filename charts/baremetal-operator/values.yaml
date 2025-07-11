@@ -248,7 +248,7 @@ prometheus:
     labels: {}
     interval: 30s
     scrapeTimeout: 10s
-  
+
   # Metrics service configuration
   metricsService:
     enabled: true
