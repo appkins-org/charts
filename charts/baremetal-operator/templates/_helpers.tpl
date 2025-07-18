@@ -65,5 +65,5 @@ Create the name of the service account to use
 The image to use
 */}}
 {{- define "baremetal-operator.image" -}}
-{{- printf "%s:%s" .Values.image.repository (default (printf "v%s" .Chart.AppVersion) .Values.image.tag) }}
+{{- printf "%s:%s" .Values.baremetalOperator.image.repository (default (printf "v%s" .Chart.AppVersion) .Values.baremetalOperator.image.tag) }}
 {{- end }}
