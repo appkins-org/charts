@@ -62,7 +62,7 @@ dependencies:
   - name: mimir-distributed
     condition: mimir.enabled
     repository: https://grafana.github.io/helm-charts
-    version: "^4.5.0-weekly.241"
+    version: "^5.0.0"
     tags:
       - monitoring
       - distributed
