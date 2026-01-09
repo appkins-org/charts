@@ -1,19 +1,19 @@
 dependencies:
 - name: cert-manager
   repository: https://charts.jetstack.io
-  version: v1.12.1
+  version: v1.19.2
 - name: cilium
   repository: https://helm.cilium.io
-  version: 1.14.0-snapshot.3
+  version: 1.19.0-pre.4
 - name: metallb
   repository: https://metallb.github.io/metallb
-  version: 0.13.10
+  version: 0.13.12
 - name: metrics-server
   repository: https://kubernetes-sigs.github.io/metrics-server
-  version: 3.10.0
+  version: 3.13.0
 - name: local-path-provisioner
   repository: https://charts.containeroo.ch
-  version: 0.0.24
+  version: 0.0.35
 - name: minio
   repository: https://charts.min.io
   version: 4.1.0
@@ -28,9 +28,9 @@ dependencies:
   version: 2.16.0
 - name: tempo
   repository: https://grafana.github.io/helm-charts
-  version: 1.3.1
+  version: 1.24.1
 - name: mimir-distributed
   repository: https://grafana.github.io/helm-charts
-  version: 4.5.0-weekly.241
-digest: sha256:9c250a07bcbc9fc2c097a3e8296499f4410cc1121f1cd32bf5955423ad617f5f
-generated: "2023-06-11T00:31:37.401895-05:00"
+  version: 4.5.0
+digest: sha256:01a55d9112f9a634d13c3e61d3514e2a32b57d65c5dc4f2ee3e0761751b912e4
+generated: "2026-01-09T20:45:37.347363234Z"
